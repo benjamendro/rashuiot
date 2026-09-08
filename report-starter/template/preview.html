@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview</title>
+<link rel="stylesheet" href="brand.css">
+</head>
+<body>
+<div class="topbar"><img id="logo" class="logo" alt=""><nav id="topnav" class="topnav"></nav></div>
+<div class="progress" id="progress"></div>
+<header class="hero" id="hero"></header>
+<main id="app"></main>
+<footer class="band-dark foot" id="footer"></footer>
+
+<script src="content.js"></script>
+<script>
+  // override with the editor's live data if present
+  try{ var p=sessionStorage.getItem('REPORT_PREVIEW'); if(p) window.REPORT=JSON.parse(p); }catch(e){ console.warn(e); }
+</script>
+<script src="charts.js"></script>
+<script src="render.js"></script>
+</body>
+</html>

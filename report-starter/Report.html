@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoryReport · דוח אינטראקטיבי</title>
+<link rel="stylesheet" href="template/brand.css">
+</head>
+<body>
+
+<!-- bundler splash (used only by the standalone-HTML export) -->
+<template id="__bundler_thumbnail" data-bg-color="#14273F">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(440,250)">
+      <rect x="0"   y="0"   width="90" height="90" rx="8" fill="#54C4E0"/>
+      <rect x="100" y="0"   width="90" height="90" rx="8" fill="#1CA8C4"/>
+      <rect x="200" y="0"   width="90" height="90" rx="8" fill="#C4A870"/>
+      <rect x="0"   y="100" width="90" height="90" rx="8" fill="#1C70A8"/>
+      <rect x="100" y="100" width="90" height="90" rx="8" fill="#8C1C8C"/>
+      <rect x="200" y="100" width="90" height="90" rx="8" fill="#1C548C"/>
+      <rect x="0"   y="200" width="90" height="90" rx="8" fill="#8CC438"/>
+      <rect x="100" y="200" width="90" height="90" rx="8" fill="#54C4E0"/>
+    </g>
+  </svg>
+</template>
+
+<div class="topbar">
+  <img id="logo" class="logo" alt="">
+  <nav id="topnav" class="topnav"></nav>
+</div>
+<div class="progress" id="progress"></div>
+
+<header class="hero" id="hero"></header>
+<main id="app"></main>
+<footer class="band-dark foot" id="footer"></footer>
+
+<div id="tweaks-root"></div>
+
+<!-- React + Babel (for the Tweaks panel only) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="template/tweaks-panel.jsx"></script>
+<script type="text/babel" src="template/tweaks-app.jsx"></script>
+
+<!-- the report (vanilla — edit content.js only) -->
+<script src="template/content.js"></script>
+<script src="template/charts.js"></script>
+<script src="template/render.js"></script>
+<script src="template/edit-mode.js"></script>
+
+<style id="__om-edit-overrides"></style>
+</body>
+</html>

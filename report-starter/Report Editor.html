@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עורך הדוח · No-code Editor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root{ --bg:#14273F; --panel:#0E2036; --line:#294155; --ink:#EAF4F8; --accent:#1CA8C4; --gold:#C4A870; --mut:#8DA7BE; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; font-family:'Assistant',system-ui,sans-serif; background:#0E2036; color:#EAF4F8; }
+  .app{ display:flex; flex-direction:column; height:100vh; }
+  header{ display:flex; align-items:center; gap:16px; padding:12px 20px; background:#14273F; border-bottom:1px solid #294155; flex:none; }
+  header .t{ font-weight:800; font-size:17px; }
+  header .t small{ display:block; font-weight:600; font-size:12px; color:#8DA7BE; }
+  header .sp{ flex:1; }
+  .btn{ font-family:inherit; font-weight:700; font-size:13.5px; border:1px solid #35506a; color:#EAF4F8; padding:9px 15px; border-radius:9px; cursor:pointer; transition:.15s; background:#1B3450; }
+  .btn:hover{ border-color:var(--accent); color:#fff; }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#06222b; }
+  .btn.primary:hover{ filter:brightness(1.08); }
+  .main{ display:grid; grid-template-columns: 0.92fr 1.08fr; flex:1; min-height:0; }
+  .edit{ display:flex; flex-direction:column; min-height:0; border-inline-end:1px solid #294155; }
+  .edit .bar{ display:flex; align-items:center; gap:10px; padding:8px 14px; background:#102a44; border-bottom:1px solid #294155; font-size:12.5px; color:#8DA7BE; }
+  .edit .bar b{ color:#EAF4F8; }
+  .edit .dot{ width:8px; height:8px; border-radius:50%; background:#3BD27A; }
+  .edit .dot.err{ background:#E0683C; }
+  textarea{ flex:1; width:100%; resize:none; border:0; outline:0; padding:18px 20px; background:#0B1B2E;
+    color:#D7E6F0; font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.7; unicode-bidi:plaintext; tab-size:2; }
+  .prev{ display:flex; flex-direction:column; min-height:0; background:#fff; }
+  .prev .bar{ display:flex; align-items:center; gap:10px; padding:8px 14px; background:#102a44; color:#8DA7BE; font-size:12.5px; border-bottom:1px solid #294155; }
+  .prev iframe{ flex:1; width:100%; border:0; background:#F4F7F9; }
+  .err-msg{ color:#F0A98C; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+  .hint{ padding:10px 14px; background:#102a44; border-top:1px solid #294155; font-size:12px; color:#8DA7BE; line-height:1.6; }
+  .hint code{ color:var(--gold); font-family:'IBM Plex Mono',monospace; }
+  @media (max-width:880px){ .main{ grid-template-columns:1fr; } .prev{ min-height:50vh; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="t">עורך הדוח <small>No-code editor · edit text → live preview</small></div>
+    <div class="sp"></div>
+    <button class="btn" id="reload">↻ רענון</button>
+    <button class="btn" id="dlmd">⬇ content.md</button>
+    <button class="btn primary" id="dljs">⬇ content.js</button>
+  </header>
+  <div class="main">
+    <section class="edit">
+      <div class="bar"><span class="dot" id="dot"></span><span id="status"><b>תוכן</b> — ערכו את הטקסט, התצוגה מתעדכנת אוטומטית</span></div>
+      <textarea id="src" spellcheck="false" placeholder="טוען את content.md…"></textarea>
+      <div class="hint">מלאו טקסט אחרי הנקודתיים, ושנו מספרים בטבלאות. ערכת נושא: שורת <code>theme:</code> בראש הקובץ (<code>mosaic</code> / <code>academic</code> / <code>civic</code>). בסיום — <code>⬇ content.js</code> ושמרו אותו בתיקיית <code>template/</code>.</div>
+    </section>
+    <section class="prev">
+      <div class="bar">תצוגה חיה · Live preview <span class="err-msg" id="emsg"></span></div>
+      <iframe id="frame" src="template/preview.html"></iframe>
+    </section>
+  </div>
+</div>
+
+<script src="template/md.js"></script>
+<script>
+  const src=document.getElementById('src'), frame=document.getElementById('frame');
+  const dot=document.getElementById('dot'), emsg=document.getElementById('emsg'), status=document.getElementById('status');
+  let lastGood=null, timer=null;
+
+  function build(){
+    try{
+      const R=window.parseReportMD(src.value);
+      if(!R.sections || !R.sections.length) throw new Error('no sections parsed');
+      lastGood=R;
+      sessionStorage.setItem('REPORT_PREVIEW', JSON.stringify(R));
+      dot.classList.remove('err'); emsg.textContent='';
+      status.innerHTML='<b>תוכן</b> — '+R.sections.length+' מקטעים · עודכן';
+      frame.contentWindow.location.reload();
+    }catch(e){
+      dot.classList.add('err'); emsg.textContent='שגיאת פירוק: '+e.message;
+    }
+  }
+  function debounced(){ clearTimeout(timer); timer=setTimeout(build, 550); }
+
+  src.addEventListener('input', debounced);
+  document.getElementById('reload').onclick=build;
+
+  function download(name, text, type){
+    const b=new Blob([text], {type:type||'text/plain;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }
+  document.getElementById('dlmd').onclick=()=>download('content.md', src.value, 'text/markdown;charset=utf-8');
+  document.getElementById('dljs').onclick=()=>{ const R=lastGood||window.parseReportMD(src.value); download('content.js', window.reportToJS(R), 'text/javascript;charset=utf-8'); };
+
+  // load the current content.md
+  fetch('template/content.md').then(r=>r.text()).then(txt=>{ src.value=txt; build(); })
+    .catch(()=>{ src.value='# REPORT\nname: הדוח שלי\ntheme: mosaic\n\n# HERO\ntitle: כותרת\naccent: הדוח\nsub: תיאור קצר\n\n## intro [rich]\ntitle: פתיח\nlede: טקסט…\n'; build(); });
+</script>
+</body>
+</html>
