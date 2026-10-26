@@ -1,6 +1,9 @@
 # Interactive StoryReport — Template
 ### תבנית דוח אינטראקטיבי · מרכז הידע האזורי גליל מזרחי
 
+> **מסד נתוני הרשויות המקומיות (למ"ס) 2003–2024** נמצא באותו repo: [`data/release/README.md`](data/release/README.md)
+> (אנאליסטים) · [`AGENTS.md`](AGENTS.md) (סוכני AI) · [`etl/README.md`](etl/README.md) (הצנרת).
+
 A reusable, brand-driven **interactive report** (Hebrew, RTL): a scroll-driven story with
 animated charts, KPI counters, a methodology flow, recommendations, and an event invite.
 Built to be re-used for **any** project — change the content, optionally the brand, done.

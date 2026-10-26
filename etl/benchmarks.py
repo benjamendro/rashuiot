@@ -14,7 +14,6 @@ Usage:  python -m etl.benchmarks     (after python -m etl.gold)
 """
 
 import os
-import re
 
 import numpy as np
 import pandas as pd
@@ -22,19 +21,8 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, 'data')
 
-# identifiers and attributes that are not measures: never benchmarked
-_NOT_A_MEASURE = re.compile(r'סמל|שנת קבלת|שם ועדת|מעמד מוניציפלי|^כללי › מחוז')
-# labels that already describe a rate, share, average, index or per-capita value
-_RATE = re.compile(r'אחוז|%|שיעור|ממוצע|חציון|לנפש|ל-1,000|ל-100,000|לאלף|לקמ"ר|צפיפות|מדד|אשכול|'
-                   r'דירוג|יחס|תוחלת|גיל|ציון|שכר|מרחק|פריון|ג\'יני|סטיית|ערך|הכנסה ממוצעת|טמפ')
 GROUPS = [('national', None), ('status', 'status'), ('ses', 'ses_cluster'),
           ('ses_latest', 'ses_cluster_latest'), ('ses_status', 'ses_status'), ('eshkol', 'eshkol')]
-
-
-def measure_type(label):
-    if _NOT_A_MEASURE.search(label):
-        return 'attribute'
-    return 'rate' if _RATE.search(label) else 'count'
 
 
 def _out(*parts):
@@ -110,24 +98,22 @@ def main():
     facts = pd.read_parquet(os.path.join(DATA, 'gold', 'facts.parquet'))
     ay = pd.read_csv(os.path.join(DATA, 'gold', 'authority_year.csv'))
     dim = pd.read_csv(os.path.join(DATA, 'gold', 'dim_authority.csv')).fillna({'eshkol': ''})
-    catalog = pd.read_csv(os.path.join(DATA, 'silver', 'indicator_catalog_DRAFT.csv'))
+    catalog = pd.read_csv(os.path.join(DATA, 'gold', 'indicators_classified.csv'))
     colmap = pd.read_csv(os.path.join(DATA, 'silver', 'column_map_DRAFT.csv'),
                          usecols=['indicator_id', 'review_needed'])
     from .gold import load_yaml, resolve_key_indicators
     keys = resolve_key_indicators(catalog)
 
-    catalog['measure_type'] = catalog['label_latest'].map(measure_type)
-    catalog.loc[catalog['value_kind'] == 'text', 'measure_type'] = 'attribute'
-    types = catalog.set_index('indicator_id')['measure_type']
+    types = catalog.set_index('indicator_id')['measure_type']      # from etl.classify
 
-    prim = facts[(facts['row_type'] == 'authority') & facts['is_primary']].copy()
-    prim = prim[prim['indicator_id'].map(types).isin(['rate', 'count'])]
+    prim = facts[(facts['row_type'] == 'authority') & facts['is_primary'] & facts['value'].notna()].copy()
+    prim = prim[prim['indicator_id'].map(types).isin(['rate', 'count', 'index'])]
     f = attach_attributes(prim, ay)
     k = derived_per_1000(f, types, keys['population'])
     f = pd.concat([f, k], ignore_index=True)
 
     bench = group_stats(f)
-    cbs = facts[(facts['row_type'] == 'summary') & facts['is_primary']]
+    cbs = facts[(facts['row_type'] == 'summary') & facts['is_primary'] & facts['value'].notna()]
     cbs = cbs.pivot_table(index=['indicator_id', 'period_year'], columns='summary_group',
                           values='value', aggfunc='first')
     cbs.columns = [f'cbs_{c}' for c in cbs.columns]

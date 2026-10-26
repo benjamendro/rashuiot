@@ -49,6 +49,8 @@ def _scale_vs_latest(vals, years):
 
 def main():
     colmap = pd.read_csv(os.path.join(DATA, 'silver', 'column_map_DRAFT.csv'))
+    from .release import mapping_confidence
+    colmap['mapping_confidence'] = mapping_confidence(colmap)   # only medium/low go to review
     catalog = pd.read_csv(os.path.join(DATA, 'silver', 'indicator_catalog_DRAFT.csv'))
     units = pd.read_csv(os.path.join(DATA, 'silver', 'units_review.csv')).fillna('')
     cells = pd.read_parquet(os.path.join(DATA, 'bronze', 'cells.parquet'))
@@ -117,7 +119,8 @@ def main():
                 'm': r.match_method, 'score': _num(r.match_score, 3),
                 'corr': _num(r.corr_with_newer_year, 3),
                 'median': _num(r.median), 'sample': _num(sample.get((r.year, r.sheet, r.col), np.nan)),
-                'why': r.review_reason if isinstance(r.review_reason, str) else '',
+                'why': (f"[{r.mapping_confidence}] {r.review_reason}" if isinstance(r.review_reason, str)
+                        and r.review_reason else f'[{r.mapping_confidence}]') if r.mapping_confidence != 'high' else '',
                 'n': int(r.n_numeric) if not pd.isna(r.n_numeric) else 0,
             })
         inds.append({

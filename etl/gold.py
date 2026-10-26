@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from .classify import classify
 from .matching import EshkolMatcher
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -63,8 +64,10 @@ def resolve_key_indicators(catalog):
 # ---- facts -------------------------------------------------------------------------
 
 def build_facts(cells, colmap, unit_decisions):
+    """Every published cell of a mapped column: numbers and every CBS symbol or text, so
+    nothing a source cell says is dropped (value is NaN where there is no number)."""
     cols = colmap[['year', 'sheet', 'col', 'indicator_id', 'data_period', 'unit_hint', 'review_needed']]
-    f = cells[cells['value'].notna()].merge(cols, on=['year', 'sheet', 'col'], how='inner')
+    f = cells.merge(cols, on=['year', 'sheet', 'col'], how='inner')
     f = f.rename(columns={'year': 'file_year', 'value': 'value_raw'})
     f['period_year'] = f['data_period'].map(period_year).astype('Int64')
     f.loc[f['period_year'].isna(), 'period_year'] = f['file_year']
@@ -76,10 +79,22 @@ def build_facts(cells, colmap, unit_decisions):
     f['unit_factor'] = [fac.get(k, 1.0) for k in keys]
     f['value'] = f['value_raw'] * f['unit_factor']
     f['low_reliability'] = f['flag'].eq('low_reliability')
+    f['nil_as_zero'] = False
     f = f.rename(columns={'review_needed': 'mapping_review'})
     return f[['indicator_id', 'row_type', 'summary_group', 'muni_code', 'muni_name', 'file_year',
               'sheet', 'col', 'data_period', 'period_year', 'value_raw', 'unit_factor', 'value',
-              'unit_hint', 'low_reliability', 'mapping_review']].reset_index(drop=True)
+              'value_text', 'flag', 'raw', 'unit_hint', 'low_reliability', 'nil_as_zero',
+              'mapping_review']].reset_index(drop=True)
+
+
+def apply_nil_as_zero(facts, catalog):
+    """CBS '-' means "חוסר מקרים" (no cases). For counts that is 0; for rates, indices and
+    attributes it stays empty (a rate with no cases is undefined). Marked nil_as_zero."""
+    counts = set(catalog.loc[catalog['measure_type'] == 'count', 'indicator_id'])
+    m = facts['flag'].eq('dash') & facts['indicator_id'].isin(counts)
+    facts.loc[m, 'value'] = 0.0
+    facts.loc[m, 'nil_as_zero'] = True
+    return facts
 
 
 def infer_unlabelled_editions(facts, ids, report):
@@ -117,20 +132,24 @@ def mark_primary(facts):
     """The newest file is the primary revision of each (indicator, authority, period year)."""
     a = facts['row_type'] == 'authority'
     key = ['indicator_id', 'muni_code', 'period_year']
-    order = facts[a].sort_values(key + ['file_year', 'col'], ascending=[True, True, True, False, True])
+    # prefer a row with a value; among those the newest file (a later '..' must not hide
+    # a number an earlier file gave for the same year)
+    facts['_has'] = facts['value'].notna() | facts['value_text'].notna()
+    order = facts[a].sort_values(key + ['_has', 'file_year', 'col'],
+                                 ascending=[True, True, True, False, False, True])
     first = ~order.duplicated(key)
     facts['is_primary'] = False
     facts.loc[order.index[first.values], 'is_primary'] = True
     s = facts['row_type'] == 'summary'
     skey = ['indicator_id', 'summary_group', 'period_year']
-    sorder = facts[s].sort_values(skey + ['file_year'], ascending=[True, True, True, False])
+    sorder = facts[s].sort_values(skey + ['_has', 'file_year'], ascending=[True, True, True, False, False])
     facts.loc[sorder.index[~sorder.duplicated(skey).values], 'is_primary'] = True
-    return facts
+    return facts.drop(columns='_has')
 
 
 def revision_report(facts):
     """Where several files report the same authority/indicator/year with different values."""
-    a = facts[facts['row_type'] == 'authority']
+    a = facts[(facts['row_type'] == 'authority') & facts['value'].notna()]
     g = a.groupby(['indicator_id', 'muni_code', 'period_year'])['value']
     stats = g.agg(['count', 'min', 'max'])
     multi = stats[stats['count'] > 1]
@@ -223,7 +242,14 @@ def main():
 
     facts = build_facts(cells, colmap, load_yaml('unit_decisions.yaml') or [])
     facts = infer_unlabelled_editions(facts, [keys['ses_cluster'], keys['ses_value'], keys['ses_rank']], report)
+    facts = mark_primary(facts)                      # provisional, for classification
+    classified = classify(catalog, facts, keys['population'])
+    facts = apply_nil_as_zero(facts, classified)
     facts = mark_primary(facts)
+    moved = classified['measure_type_basis'].ne('label').sum()
+    report.append(f"measure types: {classified['measure_type'].value_counts().to_dict()}; "
+                  f"{moved} reclassified by the data check")
+    report.append(f"'-' (no cases) stored as 0 for count measures: {int(facts['nil_as_zero'].sum()):,} cells")
     n_multi, differ = revision_report(facts)
     report.append(f'{n_multi:,} (indicator, authority, year) reported by more than one file; '
                   f'{len(differ):,} of them with different values (newest file kept as primary)')
@@ -232,6 +258,7 @@ def main():
     ay = build_authority_year(facts, registry, dim, keys)
 
     facts.to_parquet(_out('gold', 'facts.parquet'), index=False)
+    classified.to_csv(_out('gold', 'indicators_classified.csv'), index=False, encoding='utf-8-sig')
     differ.to_csv(_out('qa', 'revisions.csv'), index=False, encoding='utf-8-sig')
     dim.to_csv(_out('gold', 'dim_authority.csv'), index=False, encoding='utf-8-sig')
     ay.to_csv(_out('gold', 'authority_year.csv'), index=False, encoding='utf-8-sig')

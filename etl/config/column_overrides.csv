@@ -2,3 +2,11 @@
 # indicator_id: an id from silver/indicator_catalog_DRAFT.csv, or NEW to keep the column separate.
 # Example:  2015,נתונים כספיים - עיריות ומ.מקומי,40,B1a2b3c,"same as הכנסות מהממשלה: ממשרד הרווחה"
 year,sheet,col,indicator_id,note
+2003,נתונים פיזיים - מועצות אזוריות,11,P14b4f4,"""מושבים (לרבות כפרים שיתופיים)"" sums to 409 over regional councils = the moshavim series (~405); CBS renamed it ""מושבים"" in 2021"
+2003,נתונים פיזיים - מועצות אזוריות,12,Pa99048,"second ""מושבים"" column sums to 42 = cooperative moshavim (~40), labelled ""מושבים שיתופיים"" from 2009"
+2004,נתונים פיזיים - מועצות אזוריות,12,P14b4f4,"the 2004 file has the two columns swapped: ""מושבים"" sums to 408"
+2004,נתונים פיזיים - מועצות אזוריות,11,Pa99048,"the 2004 file has the two columns swapped: ""(לרבות כפרים שיתופיים)"" sums to 43"
+2005,נתונים פיזיים - מ.אזוריות,11,Pa99048,"second ""מושבים"" column sums to 40 = cooperative moshavim"
+2006,נתונים פיזיים - מ.אזוריות,11,Pa99048,"second ""מושבים"" column sums to 40 = cooperative moshavim"
+2007,נתונים פיזיים - מ.אזוריות,12,Pa99048,"second ""מושבים"" column sums to 40 = cooperative moshavim"
+2008,נתונים פיזיים - מ.אזוריות,12,Pa99048,"second ""מושבים"" column sums to 40 = cooperative moshavim"

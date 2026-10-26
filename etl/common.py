@@ -105,17 +105,27 @@ def strip_period(s):
 _NUM_RE = re.compile(r'^-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?$')
 _PAREN_RE = re.compile(r'^\(\s*(-?\d+(?:\.\d+)?)\s*\)$')
 _MALFORMED_RE = re.compile(r'^-?\d+(?:\.\d+){2,}$')
+_FOOTNOTE_NUM_RE = re.compile(r'^(-?\d+(?:\.\d+)?)\s*\*+$')            # '6.9 *'
+_BAND_RE = re.compile(r'^\d+\s*-\s*\d+$')                              # '1-5' (count band)
+# invisible direction marks / embedding controls CBS sometimes wraps numbers in
+# ('‫15.7‬' in the 2022 file), plus no-break spaces
+_INVISIBLE_RE = re.compile('[​-‏‪-‮⁠-⁩﻿ ]')
 
 
 def parse_value(v):
     """Parse a CBS cell into (value: float|None, text: str|None, flag: str|None).
 
-    CBS conventions (see the legend in each file):
-      '-'      -> flag 'dash'            nil / no cases / not applicable
-      '..'     -> flag 'not_available'   data not available or suppressed
-      '( 2.3)' -> value 2.3, flag 'low_reliability'  (high sampling/relative error)
-      '576.650.0' -> flag 'malformed_number'  (ambiguous separators; value left empty)
-    Anything else non-numeric is kept as text (district, status, category labels).
+    CBS special symbols (legend "סימנים מיוחדים בלוחות" in each file):
+      '..'     -> flag 'not_available'   unknown or not publishable
+      '-'      -> flag 'dash'            "חוסר מקרים" - no cases
+      '( 2.3)' -> 2.3, 'low_reliability' estimate / small numbers / high sampling error
+    Seen in the data, not in the legend:
+      '6.9 *'      -> 6.9, 'footnote'          a value with a footnote mark
+      '1-5'        -> text, 'range'            a band instead of a small count
+      '#N/A', '.'  -> 'not_available'
+      '576.650.0'  -> 'malformed_number'       ambiguous separators; never guessed
+    Invisible direction marks around numbers are removed first. Anything else
+    non-numeric is kept as text (district, status, category marks such as 'x').
     """
     if is_blank(v):
         return None, None, 'blank'
@@ -123,20 +133,27 @@ def parse_value(v):
         return float(v), None, None
     if isinstance(v, (int, float)):
         return float(v), None, None
-    s = clean_text(v)
+    s = clean_text(_INVISIBLE_RE.sub('', str(v)))
+    if s == '':
+        return None, None, 'blank'
     t = s.replace(',', '')
     if _NUM_RE.match(t):
         return float(t), None, None
-    if s in ('-', '–', '—'):
+    if s in ('-', '–', '—', '---', '--'):
         return None, None, 'dash'
-    if s in ('..', '...', '. .'):
+    if s in ('..', '...', '. .', '.', '#N/A', '#n/a', 'N/A'):
         return None, None, 'not_available'
     m = _PAREN_RE.match(t)
     if m:
         return float(m.group(1)), None, 'low_reliability'
+    m = _FOOTNOTE_NUM_RE.match(t)
+    if m:
+        return float(m.group(1)), None, 'footnote'
     if _MALFORMED_RE.match(t):
-        # e.g. '576.650.0' (2016 budget): ambiguous separators, never guess a value
+        # e.g. '576.650.0' (2014-2016 budget): ambiguous separators, never guess a value
         return None, s, 'malformed_number'
+    if _BAND_RE.match(t):
+        return None, s, 'range'
     return None, s, 'text'
 
 

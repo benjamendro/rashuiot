@@ -172,12 +172,32 @@ def test_period_year():
 
 # ---- gold / benchmarks ------------------------------------------------------------
 
-def test_measure_type():
-    from etl.benchmarks import measure_type
-    assert measure_type('דמוגרפיה › לידות חי') == 'count'
-    assert measure_type('דמוגרפיה › שיעור פטירות מתוקנן ל-1,000 תושבים') == 'rate'
-    assert measure_type('רווחה › אחוז מקבלי דמי אבטלה מבני 67-20 (שנתי)') == 'rate'
-    assert measure_type('כללי › סמל ועדת תכנון ובנייה') == 'attribute'
+def test_measure_type_from_label():
+    from etl.classify import label_measure_type as mt
+    assert mt('דמוגרפיה › לידות חי', 'numeric') == 'count'
+    assert mt('דמוגרפיה › שיעור פטירות מתוקנן ל-1,000 תושבים', 'numeric') == 'rate'
+    assert mt('רווחה › אחוז מקבלי דמי אבטלה מבני 67-20 (שנתי)', 'numeric') == 'rate'
+    assert mt('כללי › סמל ועדת תכנון ובנייה', 'numeric') == 'attribute'
+    assert mt('מדד חברתי-כלכלי › אשכול (מ-1 עד 10, 1 הנמוך ביותר)', 'numeric') == 'index'
+    assert mt('כללי › מחוז', 'text') == 'attribute'
+
+
+def test_clean_name_and_topic():
+    from etl.classify import clean_name, load_topics, topic_of
+    assert clean_name('מקבלי דמי אבטלה - גברים 2009') == 'מקבלי דמי אבטלה - גברים'
+    rules, strip = load_topics()
+    assert topic_of('שכר ורווחה › אחוז המבוטחים בקופ"ח מתוך סך כל המבוטחים', 'physical', rules, strip) == 'welfare'
+    assert topic_of('חיוב ארנונה למגורים (באלפי ש"ח)', 'physical', rules, strip) == 'budget_arnona'
+    assert topic_of('חינוך והשכלה › אחוז זכאים לתעודת בגרות מבין תלמידי כיתות יב', 'physical', rules, strip) == 'education'
+
+
+def test_parse_value_cbs_symbols():
+    from etl.common import parse_value
+    assert parse_value('\u202b15.7\u202c') == (15.7, None, None)          # invisible direction marks
+    assert parse_value('6.9 *') == (6.9, None, 'footnote')
+    assert parse_value('#N/A') == (None, None, 'not_available')
+    assert parse_value('1-5') == (None, '1-5', 'range')
+    assert parse_value('x') == (None, 'x', 'text')
 
 
 def test_ses_as_of_year():
@@ -207,3 +227,52 @@ def test_group_stats_and_ranks_on_known_data():
     r = ranks(f).set_index('muni_code')
     assert r.loc[4, 'pct_rank_national'] == 100.0
     assert r.loc[3, 'pct_rank_ses'] == 50.0
+
+
+# ---- release: guarantees a consumer relies on --------------------------------------
+
+REL = os.path.join(ROOT, 'data', 'release', 'parquet')
+needs_release = pytest.mark.skipif(not os.path.exists(os.path.join(REL, 'indicators.parquet')),
+                                   reason='release not built')
+
+
+@needs_release
+def test_release_matches_its_documentation():
+    import pandas as pd
+    from etl.release import ORDER, SCHEMA
+    for t in ORDER:
+        df = pd.read_parquet(os.path.join(REL, f'{t}.parquet'))
+        assert list(df.columns) == list(SCHEMA[t]['columns']), t
+        assert not df.duplicated(SCHEMA[t]['primary_key']).any(), t
+
+
+@needs_release
+def test_release_references_resolve():
+    import pandas as pd
+    ind = set(pd.read_parquet(os.path.join(REL, 'indicators.parquet')).indicator_id)
+    mun = set(pd.read_parquet(os.path.join(REL, 'authorities.parquet')).muni_code)
+    obs = pd.read_parquet(os.path.join(REL, 'observations.parquet'), columns=['muni_code', 'indicator_id'])
+    assert set(obs.indicator_id) <= ind
+    assert set(obs.muni_code) <= mun
+
+
+@needs_release
+def test_release_eshkol_authorities_and_aliases():
+    import pandas as pd
+    a = pd.read_parquet(os.path.join(REL, 'authorities.parquet'))
+    assert (a.eshkol == 'גליל מזרחי').sum() == 18 and (a.eshkol == 'גליל מערבי').sum() == 19
+    al = pd.read_parquet(os.path.join(REL, 'authority_aliases.parquet'))
+    for spelling in ['קרית שמונה', 'קריית שמונה', "עג'ר", "ע'ג'ר"]:
+        assert spelling in set(al.alias), spelling
+
+
+@needs_release
+def test_release_key_series_are_continuous():
+    import pandas as pd
+    ind = pd.read_parquet(os.path.join(REL, 'indicators.parquet')).set_index('indicator_id')
+    obs = pd.read_parquet(os.path.join(REL, 'observations.parquet'))
+    pop = obs[(obs.indicator_id == 'Pfb4027') & (obs.muni_code == 8000)].set_index('year')['value']
+    assert ind.at['Pfb4027', 'first_year'] == 2003 and ind.at['Pfb4027', 'last_year'] == 2024
+    assert 0.95 < pop[2018] / pop[2017] < 1.05                       # thousands -> persons converted
+    ses = obs[obs.indicator_id == 'Pb5ba90'].value.dropna()
+    assert ses.between(1, 10).all()
