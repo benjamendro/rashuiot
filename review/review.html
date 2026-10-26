@@ -1,0 +1,599 @@
+<title>בקרת מדדי רשויות</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working desk — slim coverage strip on top, two tabs; units as stacked dossiers, mapping as list + detail. */
+:root {
+  --paper: #F3F6F8; --card: #FFFFFF; --ink: #14273F; --ink-2: #4A5D70; --ink-3: #7D8D9C;
+  --line: #D8E2E9; --accent: #1C70A8; --accent-soft: #DBEEF4; --cyan: #1CA8C4; --gold: #9A7B2F; --gold-soft: #F3ECDC;
+  --magenta: #8C1C8C; --magenta-soft: #F3E3F3;
+  --ok: #3F7A1C; --ok-soft: #E5F1DA; --crit: #B0322A; --crit-soft: #F8E1DE; --warn: #8A6A12; --warn-soft: #F6EDCF;
+  --hatch: #C9D5DE;
+  --f-head: 'Rubik', 'Assistant', system-ui, sans-serif;
+  --f-body: 'Assistant', system-ui, sans-serif;
+  --f-num: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0D1824; --card: #132333; --ink: #E4EDF4; --ink-2: #A3B5C5; --ink-3: #74889A;
+  --line: #24394D; --accent: #54C4E0; --accent-soft: #163449; --cyan: #54C4E0; --gold: #D8BC7A; --gold-soft: #2E2817;
+  --magenta: #D98AD9; --magenta-soft: #2D1A2E;
+  --ok: #9CCB6A; --ok-soft: #1B2E14; --crit: #F08A80; --crit-soft: #3A1A18; --warn: #E2C266; --warn-soft: #302710;
+  --hatch: #33495E; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0D1824; --card: #132333; --ink: #E4EDF4; --ink-2: #A3B5C5; --ink-3: #74889A;
+  --line: #24394D; --accent: #54C4E0; --accent-soft: #163449; --cyan: #54C4E0; --gold: #D8BC7A; --gold-soft: #2E2817;
+  --magenta: #D98AD9; --magenta-soft: #2D1A2E;
+  --ok: #9CCB6A; --ok-soft: #1B2E14; --crit: #F08A80; --crit-soft: #3A1A18; --warn: #E2C266; --warn-soft: #302710;
+  --hatch: #33495E; color-scheme: dark }
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+
+/* ---- top band ---- */
+.top { background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.top .wrap { display: grid; gap: 10px; padding-block: 14px 0; }
+.titlerow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: .92rem; }
+.status { margin-inline-start: auto; font-size: .85rem; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 2px; background: var(--ink-3); }
+.status[data-s="live"] .dot { background: var(--ok); }
+.status[data-s="off"] .dot { background: var(--crit); }
+
+.strip { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.years { display: flex; gap: 4px; align-items: flex-end; direction: ltr; }
+.yr { display: grid; justify-items: center; gap: 3px; font: 500 .7rem var(--f-num); color: var(--ink-3); }
+.yr i { width: 22px; height: 22px; border-radius: 3px; background: var(--accent); display: block; }
+.yr.miss i { background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, transparent 3px 6px); border: 1px dashed var(--ink-3); }
+.yr.miss { color: var(--crit); font-weight: 600; }
+.legend { font-size: .8rem; color: var(--ink-2); }
+.progress { display: flex; gap: 18px; flex-wrap: wrap; font-size: .88rem; }
+.progress b { font-family: var(--f-num); font-weight: 500; }
+.bar { width: 120px; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-inline-start: 6px; }
+.bar span { display: block; height: 100%; background: var(--ok); }
+
+.tabs { display: flex; gap: 4px; margin-top: 4px; }
+.tab { border: 0; background: none; padding: 10px 14px; font-family: var(--f-head); font-weight: 600; color: var(--ink-2); border-bottom: 3px solid transparent; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .cnt { font: 500 .75rem var(--f-num); background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 10px; margin-inline-start: 6px; }
+
+main .wrap { padding-block: 20px 60px; }
+.banner { background: var(--warn-soft); color: var(--warn); border-radius: var(--r); padding: 10px 14px; margin-bottom: 16px; font-size: .9rem; }
+.intro { color: var(--ink-2); max-width: 75ch; margin: 0 0 18px; font-size: .95rem; }
+
+/* ---- chips ---- */
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; letter-spacing: .02em; }
+.sev-scale_jump { background: var(--crit-soft); color: var(--crit); }
+.sev-unit_label_partial { background: var(--accent-soft); color: var(--accent); }
+.sev-unit_label_conflict { background: var(--warn-soft); color: var(--warn); }
+.m-exact { background: var(--line); color: var(--ink-2); }
+.m-unit_variant { background: var(--gold-soft); color: var(--gold); }
+.m-leaf, .m-tokens { background: var(--accent-soft); color: var(--accent); }
+.m-fuzzy { background: var(--magenta-soft); color: var(--magenta); }
+.m-new { border: 1px solid var(--line); color: var(--ink-3); }
+.m-override, .m-override_new { background: var(--ok-soft); color: var(--ok); }
+.st-ok { background: var(--ok-soft); color: var(--ok); }
+.st-detach { background: var(--crit-soft); color: var(--crit); }
+.st-move { background: var(--warn-soft); color: var(--warn); }
+.st-pending { border: 1px dashed var(--ink-3); color: var(--ink-3); }
+
+/* ---- units ---- */
+.units { display: grid; gap: 16px; }
+.ucard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.ucard[data-done="1"] { border-inline-start: 4px solid var(--ok); }
+.uhead { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.uhead h3 { font-size: 1.05rem; font-weight: 600; flex: 1 1 320px; min-width: 0; }
+.uid { font: .78rem var(--f-num); color: var(--ink-3); }
+.ugrid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+@media (max-width: 820px) { .ugrid { grid-template-columns: minmax(0, 1fr); } }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; }
+th { font-weight: 700; color: var(--ink-2); font-size: .78rem; letter-spacing: .02em; white-space: nowrap; }
+td.n, th.n { text-align: end; }
+.ytab th[scope="row"] { color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.ytab td { white-space: nowrap; font-family: var(--f-num); font-variant-numeric: tabular-nums; text-align: end; direction: ltr; }
+.ytab td.jump { background: var(--crit-soft); color: var(--crit); }
+.chart { width: 100%; max-width: 300px; height: auto; display: block; direction: ltr; }
+.chart text { fill: var(--ink-3); font: 10px var(--f-num); }
+.chart .g { stroke: var(--line); }
+.chart .l { stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.chart .p { fill: var(--accent); }
+.chart .p.x { fill: var(--crit); }
+.capt { font-size: .75rem; color: var(--ink-3); margin-top: 4px; }
+
+.suggest { background: var(--accent-soft); border-radius: var(--r); padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: .9rem; }
+.suggest b { font-weight: 700; }
+.decide { display: grid; gap: 10px; }
+.factors { display: flex; flex-wrap: wrap; gap: 8px; }
+.factor { display: grid; gap: 2px; font-size: .75rem; color: var(--ink-2); }
+.factor select { direction: ltr; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); font-family: var(--f-num); font-size: .82rem; }
+.factor select.on { border-color: var(--accent); background: var(--accent-soft); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg label { padding: 5px 10px; cursor: pointer; font-size: .85rem; border-inline-start: 1px solid var(--line); }
+.seg label:first-child { border-inline-start: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg input:checked + span { font-weight: 700; color: var(--accent); }
+.seg label:has(input:checked) { background: var(--accent-soft); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+textarea, input[type="search"], input[type="text"] { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--card); width: 100%; }
+textarea { min-height: 54px; resize: vertical; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .86rem; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.saved { font-size: .8rem; color: var(--ok); }
+.saved.err { color: var(--crit); }
+details summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .88rem; }
+details[open] summary { margin-bottom: 8px; }
+
+/* ---- mapping ---- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 14px; }
+.toolbar input[type="search"] { flex: 1 1 220px; width: auto; min-width: 0; }
+.toolbar select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.toolbar label.ck { display: flex; gap: 6px; align-items: center; font-size: .88rem; }
+.split { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.list { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); max-height: 72vh; overflow-y: auto; }
+.item { display: grid; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); cursor: pointer; background: none; border-inline: 0; border-top: 0; width: 100%; text-align: start; }
+.item:hover { background: var(--accent-soft); }
+.item[aria-current="true"] { background: var(--accent-soft); box-shadow: inset -3px 0 0 var(--accent); }
+.item .lab { font-size: .88rem; line-height: 1.35; overflow-wrap: anywhere; }
+.item .meta { display: flex; gap: 8px; align-items: center; font-size: .75rem; color: var(--ink-3); }
+.cov { display: inline-flex; gap: 2px; direction: ltr; }
+.cov i { width: 9px; height: 9px; border-radius: 2px; background: var(--line); display: block; }
+.cov i.on { background: var(--accent); }
+.cov i.miss { background: repeating-linear-gradient(135deg, var(--hatch) 0 2px, transparent 2px 4px); }
+.badge { font: 500 .72rem var(--f-num); padding: 0 6px; border-radius: 8px; background: var(--magenta-soft); color: var(--magenta); }
+.badge.done { background: var(--ok-soft); color: var(--ok); }
+.more { padding: 10px 12px; font-size: .82rem; color: var(--ink-3); }
+
+.detail { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.detail h2 { font-size: 1.1rem; font-weight: 600; overflow-wrap: anywhere; }
+.empty { color: var(--ink-3); padding: 30px 10px; text-align: center; }
+.ctab td.lab { min-width: 220px; overflow-wrap: anywhere; }
+.ctab tr.flag td { background: color-mix(in srgb, var(--magenta-soft) 55%, transparent); }
+.ctab .why { font-size: .75rem; color: var(--magenta); margin-top: 2px; }
+.acts { display: flex; gap: 4px; flex-wrap: wrap; }
+.acts .btn { padding: 3px 8px; font-size: .78rem; }
+.acts .btn[aria-pressed="true"].a-ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.acts .btn[aria-pressed="true"].a-detach { background: var(--crit-soft); border-color: var(--crit); color: var(--crit); }
+.acts .btn[aria-pressed="true"].a-move { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.movebox { margin-top: 6px; display: grid; gap: 4px; }
+.movebox small { color: var(--ink-3); }
+.legendrow { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--ink-2); }
+@media (prefers-reduced-motion: no-preference) { .item, .btn { transition: background-color .12s, border-color .12s; } }
+</style>
+
+<div dir="rtl" lang="he">
+<header class="top">
+  <div class="wrap">
+    <div class="titlerow">
+      <h1>בקרת מדדי רשויות</h1>
+      <span class="sub">בדיקת יחידות ומיפוי עמודות בין שנים · קבצי הלמ"ס "הרשויות המקומיות בישראל"</span>
+      <span class="status" id="status" data-s="wait"><span class="dot"></span><span id="statusText">מתחבר לשמירה…</span></span>
+    </div>
+    <div class="strip">
+      <div>
+        <div class="years" id="years" aria-label="שנים בבסיס הנתונים"></div>
+      </div>
+      <div class="legend">כחול = קובץ קיים · מקווקו = חסר (2019: הקובץ ב-repo הוא עותק של 2022)</div>
+      <div class="progress" id="progress"></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-units" aria-selected="true" data-tab="units">יחידות<span class="cnt" id="cnt-units">–</span></button>
+      <button class="tab" role="tab" id="tab-mapping" aria-selected="false" data-tab="mapping">מיפוי מדדים<span class="cnt" id="cnt-mapping">–</span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="banner" id="banner" hidden></div>
+
+    <section id="view-units" role="tabpanel" aria-labelledby="tab-units">
+      <p class="intro">מדדים שהיחידה או סדר הגודל שלהם משתנים בין שנים. שום ערך לא הומר עדיין. לכל שנה בחר מקדם (×1 = ללא שינוי) וסטטוס, ושמור. ההצעה מחושבת מהנתונים: חציון היחס בין ערך הרשות בשנה האחרונה לערכה באותה שנה, מעוגל לחזקה של 10.</p>
+      <div class="units" id="units"><div class="empty">טוען נתונים…</div></div>
+    </section>
+
+    <section id="view-mapping" role="tabpanel" aria-labelledby="tab-mapping" hidden>
+      <p class="intro">כל מדד מאחד עמודות מקבצים שונים. עמודות מסומנות (רקע סגול) הותאמו לפי דמיון תווית או שמתאם הערכים שלהן מול השנה הבאה נמוך. לכל עמודה: <b>אישור</b>, <b>ניתוק</b> (תהפוך למדד נפרד) או <b>העברה</b> למדד אחר.</p>
+      <div class="toolbar">
+        <input type="search" id="q" placeholder="חיפוש בתוויות או במזהה מדד">
+        <select id="f-scope" aria-label="אילו מדדים להציג">
+          <option value="review">דורשים בדיקה</option>
+          <option value="partial">מכוסים בפחות מ-5 שנים</option>
+          <option value="all">כל המדדים</option>
+        </select>
+        <select id="f-domain" aria-label="תחום">
+          <option value="all">כל התחומים</option>
+          <option value="physical">נתונים פיזיים ואוכלוסייה</option>
+          <option value="budget">תקציב</option>
+          <option value="landuse">שימושי קרקע</option>
+        </select>
+        <label class="ck"><input type="checkbox" id="f-hide"> הסתר מדדים שטופלו</label>
+      </div>
+      <div class="split">
+        <div class="list" id="list" role="list"></div>
+        <div class="detail" id="detail"><div class="empty">בחר מדד מהרשימה</div></div>
+      </div>
+    </section>
+  </div>
+</main>
+<datalist id="ind-options"></datalist>
+</div>
+
+<script>
+(() => {
+'use strict';
+const ALL_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
+const METHOD = { exact: 'זהה', unit_variant: 'יחידה שונה', leaf: 'שינוי קטגוריה', tokens: 'סדר מילים', fuzzy: 'דמיון', new: 'חדש', override: 'ידני', override_new: 'ידני' };
+const SEV = { scale_jump: 'קפיצת סדר גודל', unit_label_conflict: 'יחידות סותרות', unit_label_partial: 'תווית חלקית' };
+const DOMAIN = { physical: 'פיזי', budget: 'תקציב', landuse: 'שימושי קרקע' };
+const FACTORS = [1, 10, 100, 1000, 0.1, 0.01, 0.001];
+
+const S = { data: null, byId: {}, unitDec: {}, mapDec: {}, drafts: {}, db: null, uid: null, canWrite: false,
+            tab: 'units', sel: null, moveOpen: null, writing: {} };
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function fnum(v) {
+  if (v == null) return '—';
+  const a = Math.abs(v);
+  const d = a >= 1000 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : 4;
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(v);
+}
+function factorLabel(f) { return f >= 1 ? '×' + fnum(f) : '÷' + fnum(1 / f); }
+function colKey(c) { return `y${c.y}-s${c.s}-c${c.c}`; }
+function when(ts) { try { return new Date(ts).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return ''; } }
+
+/* ---------------- boot ---------------- */
+async function boot() {
+  try {
+    const r = await fetch('review_data.json');
+    if (!r.ok) throw new Error(r.status);
+    S.data = await r.json();
+  } catch (e) {
+    $('#units').innerHTML = '<div class="empty">קובץ הנתונים לא נטען. רענן את הדף.</div>';
+    return;
+  }
+  for (const ind of S.data.indicators) {
+    S.byId[ind.id] = ind;
+    ind.flagged = ind.cols.filter(c => c.why);
+    ind.years = [...new Set(ind.cols.map(c => c.y))];
+    ind.hay = (ind.id + ' ' + ind.label + ' ' + ind.cols.map(c => c.label).join(' ')).toLowerCase();
+  }
+  $('#ind-options').innerHTML = S.data.indicators.map(i => `<option value="${esc(i.id)} · ${esc(i.label)}"></option>`).join('');
+  renderYears();
+  const h = (location.hash || '').slice(1);
+  setTab(h === 'mapping' ? 'mapping' : 'units');
+  renderAll();
+  connect();
+}
+
+async function connect() {
+  const use = window.claude && window.claude.use;
+  const db = use ? await window.claude.use('db') : null;
+  if (!db) { setStatus('off', 'השמירה לא זמינה בתצוגה זו'); showBanner('ההחלטות לא יישמרו כאן. פתח את הדף מתוך claude.ai כשאתה מחובר כדי לשמור. אפשר עדיין לעיין בכל הנתונים.'); return; }
+  S.db = db;
+  const user = await window.claude.use('user');
+  if (user) {
+    try { S.uid = await user.id(); } catch { S.uid = null; }
+    let cw = null;
+    try { cw = await user.can('data.write'); } catch { cw = null; }
+    S.canWrite = cw !== false;
+  } else S.canWrite = true;
+  if (!S.canWrite) showBanner('יש לך הרשאת צפייה בלבד בדף זה. ההחלטות מוצגות אך לא ניתנות לעריכה.');
+  setStatus('live', S.canWrite ? 'ההחלטות נשמרות ומשותפות' : 'צפייה בלבד');
+  db.collection('unit_decisions').limit(200).onSnapshot(snap => {
+    S.unitDec = {}; snap.docs.forEach(d => { S.unitDec[d.id] = d.data(); });
+    renderUnits(); renderProgress();
+  }, err => onDbError(err));
+  db.collection('mapping_decisions').limit(1000).onSnapshot(snap => {
+    S.mapDec = {}; snap.docs.forEach(d => { S.mapDec[d.id] = d.data(); });
+    renderList(); renderDetail(); renderProgress();
+  }, err => onDbError(err));
+}
+function onDbError(err) { setStatus('off', 'החיבור לשמירה נותק'); showBanner('החיבור לשמירה נותק (' + esc(err && err.code) + '). רענן את הדף.'); }
+function setStatus(s, t) { $('#status').dataset.s = s; $('#statusText').textContent = t; }
+function showBanner(t) { const b = $('#banner'); b.textContent = t; b.hidden = false; }
+
+/* serialized writes per document */
+function write(path, body) {
+  const prev = S.writing[path] || Promise.resolve();
+  const next = prev.catch(() => {}).then(() => S.db.doc(path).set(body));
+  S.writing[path] = next;
+  return next;
+}
+
+/* ---------------- header ---------------- */
+function renderYears() {
+  const present = new Set(S.data.years_present);
+  $('#years').innerHTML = ALL_YEARS.map(y => {
+    const miss = !present.has(y);
+    return `<span class="yr ${miss ? 'miss' : ''}" title="${miss ? 'חסר' : 'קיים'}"><i></i>${y}</span>`;
+  }).join('');
+}
+function renderProgress() {
+  if (!S.data) return;
+  const units = S.data.units;
+  const uDone = units.filter(u => S.unitDec[u.id] && S.unitDec[u.id].status).length;
+  let fTot = 0, fDone = 0;
+  for (const ind of S.data.indicators) {
+    fTot += ind.flagged.length;
+    const dec = (S.mapDec[ind.id] || {}).cols || {};
+    fDone += ind.flagged.filter(c => dec[colKey(c)]).length;
+  }
+  const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+  $('#progress').innerHTML =
+    `<span>יחידות: <b>${uDone}/${units.length}</b><span class="bar"><span style="width:${pct(uDone, units.length)}%"></span></span></span>` +
+    `<span>עמודות לבדיקה: <b>${fDone}/${fTot}</b><span class="bar"><span style="width:${pct(fDone, fTot)}%"></span></span></span>`;
+  $('#cnt-units').textContent = units.length - uDone;
+  $('#cnt-mapping').textContent = fTot - fDone;
+}
+
+function setTab(t) {
+  S.tab = t;
+  for (const b of document.querySelectorAll('.tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
+  $('#view-units').hidden = t !== 'units';
+  $('#view-mapping').hidden = t !== 'mapping';
+}
+
+function renderAll() { renderProgress(); renderUnits(); renderList(); renderDetail(); }
+
+/* ---------------- units ---------------- */
+function draftFor(u) {
+  if (S.drafts[u.id]) return S.drafts[u.id];
+  const saved = S.unitDec[u.id];
+  if (saved) return { factors: { ...(saved.factors || {}) }, status: saved.status || '', note: saved.note || '' };
+  return { factors: {}, status: '', note: '' };
+}
+function suggestion(u) {
+  const f = {};
+  for (const [y, k] of Object.entries(u.suggest || {})) f[y] = Math.pow(10, k);
+  return f;
+}
+function chart(u) {
+  const pts = u.years.filter(p => p.median != null && p.median > 0);
+  if (pts.length < 2) return '';
+  const W = 300, H = 110, L = 10, R = 48, T = 10, B = 22;
+  const logs = pts.map(p => Math.log10(p.median));
+  let lo = Math.floor(Math.min(...logs)), hi = Math.ceil(Math.max(...logs));
+  if (hi === lo) { hi += 1; lo -= 0; }
+  // right-to-left like the table above it: the earliest year sits on the right
+  const xs = i => (W - R) - (pts.length === 1 ? 0 : i * (W - L - R) / (pts.length - 1));
+  const ys = v => T + (hi - v) * (H - T - B) / (hi - lo);
+  let g = '';
+  for (let k = lo; k <= hi; k++) g += `<line class="g" x1="${L}" x2="${W - R}" y1="${ys(k)}" y2="${ys(k)}"/><text x="${W - R + 6}" y="${ys(k) + 3}" text-anchor="start">${fnum(Math.pow(10, k))}</text>`;
+  const sugg = u.suggest || {};
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${xs(i).toFixed(1)},${ys(logs[i]).toFixed(1)}`).join(' ');
+  const dots = pts.map((p, i) => `<circle class="p ${sugg[p.year] ? 'x' : ''}" cx="${xs(i).toFixed(1)}" cy="${ys(logs[i]).toFixed(1)}" r="3.5"/><text x="${xs(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${String(p.year).slice(2)}</text>`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="חציון לפי שנה, סולם לוגריתמי">${g}<path class="l" d="${path}"/>${dots}</svg>
+    <div class="capt">חציון על פני הרשויות, סולם לוגריתמי. נקודה אדומה = שנה שההצעה משנה.</div>`;
+}
+function renderUnits() {
+  if (!S.data) return;
+  const box = $('#units');
+  const open = new Set([...box.querySelectorAll('details[open]')].map(d => d.dataset.id));
+  box.innerHTML = S.data.units.map(u => unitCard(u, open.has(u.id))).join('');
+}
+function unitCard(u, egOpen) {
+  const d = draftFor(u);
+  const saved = S.unitDec[u.id];
+  const sug = suggestion(u);
+  const years = u.years;
+  const head = `<tr><th scope="col"></th>${years.map(p => `<th scope="col" class="n">${p.year}</th>`).join('')}</tr>`;
+  const row = (name, fn, cls) => `<tr><th scope="row">${name}</th>${years.map(p => `<td class="${cls ? cls(p) : ''}">${fn(p)}</td>`).join('')}</tr>`;
+  const jumpCls = p => (sug[p.year] ? 'jump' : '');
+  const table = `<div class="scroll"><table class="ytab">${head}
+    ${row('יחידה בכותרת', p => esc(p.unit || '—'))}
+    ${row('תקופת נתון', p => esc(p.period))}
+    ${row('חציון', p => fnum(p.median), jumpCls)}
+    ${row(esc(S.data.sample_authority), p => fnum(p.sample), jumpCls)}
+    ${row('יחס לשנה האחרונה', p => p.scale ? '×' + fnum(p.scale.ratio) : '—')}
+  </table></div>`;
+  const sugText = Object.keys(sug).length
+    ? `הצעה: ${Object.entries(sug).map(([y, f]) => `${y} <span class="num">${factorLabel(f)}</span>`).join(' · ')}`
+    : 'הצעה: ללא שינוי בערכים (רק התווית חסרה בחלק מהשנים)';
+  const factorSel = years.map(p => {
+    const v = d.factors[p.year] ?? 1;
+    return `<label class="factor">${p.year}<select data-unit="${u.id}" data-year="${p.year}" class="${v !== 1 ? 'on' : ''}" ${S.canWrite ? '' : 'disabled'}>
+      ${FACTORS.map(f => `<option value="${f}" ${f === v ? 'selected' : ''}>${factorLabel(f)}</option>`).join('')}</select></label>`;
+  }).join('');
+  const st = (val, txt) => `<label><input type="radio" name="st-${u.id}" value="${val}" data-unit-status="${u.id}" ${d.status === val ? 'checked' : ''} ${S.canWrite ? '' : 'disabled'}><span>${txt}</span></label>`;
+  const eg = u.eg.length ? `<details data-id="${u.id}" ${egOpen ? 'open' : ''}><summary>ערכי רשויות הגליל המזרחי (${u.eg.length})</summary><div class="scroll"><table class="ytab">
+      <tr><th scope="col"></th>${years.map(p => `<th scope="col" class="n">${p.year}</th>`).join('')}</tr>
+      ${u.eg.map(r => `<tr><th scope="row">${esc(r.name)}</th>${years.map(p => `<td class="${jumpCls(p)}">${fnum(r.values[p.year])}</td>`).join('')}</tr>`).join('')}
+    </table></div></details>` : '';
+  const savedLine = saved ? `<span class="saved">נשמר ${esc(when(saved.at))}</span>` : '';
+  const dirty = !!S.drafts[u.id];
+  return `<article class="ucard" data-done="${saved && saved.status ? 1 : 0}">
+    <div class="uhead"><span class="chip sev-${u.severity}">${SEV[u.severity] || u.severity}</span><h3>${esc(u.label)}</h3><span class="uid">${u.id}</span></div>
+    ${u.contradicts ? `<div class="banner" style="margin:0">התווית לא השתנתה אבל הערכים קפצו (${esc(u.contradicts)}). כנראה שגיאת כותרת של הלמ"ס, אז ההחלטה צריכה להתבסס על הערכים.</div>` : ''}
+    <div class="ugrid">${table}<div>${chart(u)}</div></div>
+    <div class="suggest"><span>${sugText}</span>${Object.keys(sug).length && S.canWrite ? `<button class="btn" data-adopt="${u.id}">אמץ הצעה</button>` : ''}</div>
+    <div class="decide">
+      <div class="factors">${factorSel}</div>
+      <div class="row"><span class="seg">${st('apply', 'להחיל מקדמים')}${st('keep', 'להשאיר כמו שהוא')}${st('unclear', 'צריך בירור')}</span></div>
+      <textarea data-unit-note="${u.id}" placeholder="הערה (לא חובה)" ${S.canWrite ? '' : 'disabled'}>${esc(d.note)}</textarea>
+      <div class="row"><button class="btn primary" data-save-unit="${u.id}" ${S.canWrite && S.db ? '' : 'disabled'}>שמור החלטה</button>${dirty ? '<span class="saved" style="color:var(--warn)">שינויים שלא נשמרו</span>' : savedLine}<span class="saved" id="msg-${u.id}"></span></div>
+    </div>
+    ${eg}
+  </article>`;
+}
+function touchDraft(id) {
+  const u = S.data.units.find(x => x.id === id);
+  if (!S.drafts[id]) S.drafts[id] = JSON.parse(JSON.stringify(draftFor(u)));
+  return S.drafts[id];
+}
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.unit && t.dataset.year) {
+    const d = touchDraft(t.dataset.unit);
+    const v = Number(t.value);
+    if (v === 1) delete d.factors[t.dataset.year]; else d.factors[t.dataset.year] = v;
+    renderUnits();
+  } else if (t.dataset.unitStatus) {
+    touchDraft(t.dataset.unitStatus).status = t.value; renderUnits();
+  } else if (t.id === 'f-scope' || t.id === 'f-domain' || t.id === 'f-hide') {
+    renderList();
+  } else if (t.dataset.moveInput) {
+    const id = (t.value.split('·')[0] || '').trim();
+    if (S.byId[id] && id !== S.sel) setColDecision(S.sel, t.dataset.moveInput, { a: 'move', t: id });
+  } else if (t.dataset.indNote != null) {
+    saveIndNote(t.dataset.indNote, t.value);
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.unitNote) { touchDraft(t.dataset.unitNote).note = t.value; }
+  if (t.id === 'q') { clearTimeout(S.qt); S.qt = setTimeout(renderList, 150); }
+});
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.tab) { setTab(t.dataset.tab); try { history.replaceState(null, '', '#' + t.dataset.tab); } catch {} return; }
+  if (t.dataset.adopt) {
+    const u = S.data.units.find(x => x.id === t.dataset.adopt);
+    const d = touchDraft(u.id); d.factors = suggestion(u); d.status = 'apply'; renderUnits(); return;
+  }
+  if (t.dataset.saveUnit) { await saveUnit(t.dataset.saveUnit); return; }
+  if (t.dataset.pick) { S.sel = t.dataset.pick; S.moveOpen = null; renderList(); renderDetail(); if (window.matchMedia('(max-width: 900px)').matches) $('#detail').scrollIntoView({ block: 'start' }); return; }
+  if (t.dataset.act) {
+    const [key, act] = [t.dataset.key, t.dataset.act];
+    const cur = ((S.mapDec[S.sel] || {}).cols || {})[key];
+    if (act === 'move') { S.moveOpen = S.moveOpen === key ? null : key; renderDetail(); return; }
+    if (cur && cur.a === act) await setColDecision(S.sel, key, null);
+    else await setColDecision(S.sel, key, { a: act });
+    return;
+  }
+  if (t.dataset.approveAll) {
+    const ind = S.byId[t.dataset.approveAll];
+    const dec = JSON.parse(JSON.stringify(S.mapDec[ind.id] || {}));
+    dec.cols = dec.cols || {};
+    for (const c of ind.flagged) if (!dec.cols[colKey(c)]) dec.cols[colKey(c)] = { a: 'ok' };
+    await saveInd(ind.id, dec);
+  }
+});
+
+async function saveUnit(id) {
+  const msg = $('#msg-' + id);
+  const d = S.drafts[id] || draftFor(S.data.units.find(x => x.id === id));
+  if (!d.status) { msg.textContent = 'בחר סטטוס לפני השמירה'; msg.className = 'saved err'; return; }
+  const body = { indicator_id: id, factors: d.factors, status: d.status, note: d.note || '', by: S.uid || '', at: new Date().toISOString() };
+  try {
+    await write('unit_decisions/' + id, body);
+    delete S.drafts[id];
+    S.unitDec[id] = body;
+    renderUnits(); renderProgress();
+  } catch (err) {
+    const m = $('#msg-' + id);
+    if (m) { m.textContent = err && err.code === 'invalid_argument' ? 'אין לך הרשאה לשמור' : 'השמירה נכשלה, נסה שוב'; m.className = 'saved err'; }
+  }
+}
+
+/* ---------------- mapping ---------------- */
+function indDone(ind) {
+  const dec = (S.mapDec[ind.id] || {}).cols || {};
+  return ind.flagged.length > 0 && ind.flagged.every(c => dec[colKey(c)]);
+}
+function filtered() {
+  if (!S.data) return [];
+  const q = ($('#q').value || '').trim().toLowerCase();
+  const scope = $('#f-scope').value, dom = $('#f-domain').value, hide = $('#f-hide').checked;
+  return S.data.indicators.filter(ind => {
+    if (scope === 'review' && !ind.flagged.length) return false;
+    if (scope === 'partial' && ind.years.length >= 5) return false;
+    if (dom !== 'all' && !ind.cols.some(c => (c.dom || ind.domain) === dom)) return false;
+    if (hide && (indDone(ind) || (S.mapDec[ind.id] && !ind.flagged.length))) return false;
+    if (q && !ind.hay.includes(q)) return false;
+    return true;
+  });
+}
+function cov(ind) {
+  const has = new Set(ind.years), present = new Set(S.data.years_present);
+  return `<span class="cov" aria-label="${ind.years.length} שנים">${ALL_YEARS.map(y => `<i class="${!present.has(y) ? 'miss' : has.has(y) ? 'on' : ''}"></i>`).join('')}</span>`;
+}
+function renderList() {
+  if (!S.data) return;
+  const items = filtered();
+  const LIMIT = 300;
+  const html = items.slice(0, LIMIT).map(ind => {
+    const dec = (S.mapDec[ind.id] || {}).cols || {};
+    const left = ind.flagged.filter(c => !dec[colKey(c)]).length;
+    const badge = ind.flagged.length ? (left ? `<span class="badge">${left} לבדיקה</span>` : '<span class="badge done">טופל</span>') : '';
+    return `<button class="item" role="listitem" data-pick="${ind.id}" aria-current="${ind.id === S.sel}">
+      <span class="lab">${esc(ind.label)}</span>
+      <span class="meta">${cov(ind)}<span class="num">${ind.id}</span>${badge}</span></button>`;
+  }).join('');
+  $('#list').innerHTML = (html || '<div class="empty">אין מדדים שתואמים לסינון</div>') +
+    (items.length > LIMIT ? `<div class="more">מוצגים ${LIMIT} מתוך ${items.length}. צמצם בחיפוש.</div>` : '');
+  if (!S.sel && items.length) { S.sel = items[0].id; renderDetail(); renderList(); }
+}
+function renderDetail() {
+  const box = $('#detail');
+  const ind = S.byId[S.sel];
+  if (!ind) { box.innerHTML = '<div class="empty">בחר מדד מהרשימה</div>'; return; }
+  const decDoc = S.mapDec[ind.id] || {};
+  const dec = decDoc.cols || {};
+  const cols = [...ind.cols].sort((a, b) => b.y - a.y || a.c - b.c);
+  const rows = cols.map(c => {
+    const k = colKey(c), d = dec[k];
+    const flagged = !!c.why;
+    const st = d ? (d.a === 'ok' ? '<span class="chip st-ok">אושר</span>' : d.a === 'detach' ? '<span class="chip st-detach">ינותק</span>' : `<span class="chip st-move">יועבר ל-${esc(d.t)}</span>`) : (flagged ? '<span class="chip st-pending">ממתין</span>' : '');
+    const btn = (act, txt) => `<button class="btn a-${act}" data-act="${act}" data-key="${k}" aria-pressed="${!!(d && d.a === act) || (act === 'move' && S.moveOpen === k)}" ${S.canWrite && S.db ? '' : 'disabled'}>${txt}</button>`;
+    const move = S.moveOpen === k ? `<div class="movebox"><input type="text" list="ind-options" data-move-input="${k}" placeholder="הקלד מזהה או חלק מהתווית" aria-label="מדד יעד"><small>בחר מדד מהרשימה. השמירה מיידית.</small></div>` : '';
+    return `<tr class="${flagged && !d ? 'flag' : ''}">
+      <td class="num">${c.y}</td>
+      <td class="lab">${esc(c.label)}${c.why ? `<div class="why">${esc(c.why)}</div>` : ''}<div class="capt">${esc(S.data.sheets[c.s])} · עמודה ${c.c + 1}${c.period !== String(c.y) ? ' · תקופה ' + esc(c.period) : ''}${c.unit ? ' · ' + esc(c.unit) : ''}</div></td>
+      <td><span class="chip m-${c.m}">${METHOD[c.m] || c.m}</span>${c.score != null && c.m === 'fuzzy' ? `<div class="capt num">${c.score}</div>` : ''}</td>
+      <td class="n num">${c.corr == null ? '—' : c.corr}</td>
+      <td class="n num">${fnum(c.median)}</td>
+      <td class="n num">${fnum(c.sample)}</td>
+      <td><div class="acts">${btn('ok', 'אישור')}${btn('detach', 'ניתוק')}${btn('move', 'העברה')}</div>${st ? `<div style="margin-top:4px">${st}</div>` : ''}${move}</td>
+    </tr>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="uhead"><h2>${esc(ind.label)}</h2><span class="uid">${ind.id} · ${DOMAIN[ind.domain] || ind.domain}</span></div>
+    <div class="row">${cov(ind)}<span class="sub">${ind.years.length} שנים · ${ind.cols.length} עמודות מקור</span>
+      ${ind.flagged.length ? `<button class="btn" data-approve-all="${ind.id}" ${S.canWrite && S.db ? '' : 'disabled'}>אשר את כל המסומנות</button>` : ''}</div>
+    <div class="legendrow"><span>מתאם = Spearman מול אותו מדד בשנה החדשה הבאה (לפי סמל רשות)</span><span>חציון ו-${esc(S.data.sample_authority)} = ערכים כפי שפורסמו</span></div>
+    <div class="scroll"><table class="ctab">
+      <tr><th>שנה</th><th>כותרת בקובץ המקור</th><th>התאמה</th><th class="n">מתאם</th><th class="n">חציון</th><th class="n">${esc(S.data.sample_authority)}</th><th>החלטה</th></tr>
+      ${rows}</table></div>
+    <label for="note-${ind.id}" class="sub">הערה למדד</label>
+    <textarea id="note-${ind.id}" data-ind-note="${ind.id}" placeholder="למשל: לאחד עם מדד אחר, חשד לשינוי הגדרה" ${S.canWrite && S.db ? '' : 'disabled'}>${esc(decDoc.note || '')}</textarea>
+    ${decDoc.at ? `<span class="saved">עודכן ${esc(when(decDoc.at))}</span>` : ''}`;
+}
+async function saveInd(id, dec) {
+  dec.indicator_id = id; dec.by = S.uid || ''; dec.at = new Date().toISOString();
+  try { await write('mapping_decisions/' + id, dec); S.mapDec[id] = dec; renderList(); renderDetail(); renderProgress(); }
+  catch (err) { showBanner(err && err.code === 'invalid_argument' ? 'אין לך הרשאה לשמור החלטות בדף זה.' : 'השמירה נכשלה. נסה שוב.'); }
+}
+async function setColDecision(indId, key, val) {
+  const dec = JSON.parse(JSON.stringify(S.mapDec[indId] || {}));
+  dec.cols = dec.cols || {};
+  if (val) dec.cols[key] = val; else delete dec.cols[key];
+  S.moveOpen = null;
+  await saveInd(indId, dec);
+}
+async function saveIndNote(id, note) {
+  const dec = JSON.parse(JSON.stringify(S.mapDec[id] || {}));
+  if ((dec.note || '') === note) return;
+  dec.note = note; dec.cols = dec.cols || {};
+  await saveInd(id, dec);
+}
+
+boot();
+})();
+</script>
