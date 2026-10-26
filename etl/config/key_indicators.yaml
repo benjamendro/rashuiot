@@ -1,0 +1,7 @@
+# Indicators the gold layer depends on, located by their latest label (domain physical).
+# Each must resolve to exactly one indicator in silver/indicator_catalog_DRAFT.csv.
+population: 'דמוגרפיה › סה"כ אוכלוסייה בסוף השנה'
+ses_cluster: 'מדד חברתי-כלכלי › אשכול (מ-1 עד 10, 1 הנמוך ביותר)'
+ses_value: 'מדד חברתי-כלכלי › ערך מדד'
+ses_rank: 'מדד חברתי-כלכלי › דירוג (מ-1 עד 255, 1 הנמוך ביותר)'
+periphery_cluster: 'מדד פריפריאליות › אשכול (מ-1 עד 10, 1 הפריפריאלי ביותר)'

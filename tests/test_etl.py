@@ -153,3 +153,57 @@ def test_synonyms_unify_ses_wordings_and_keep_unrelated_words():
         assert out == target
     assert apply_synonyms('אחוז ישראלים') == ('אחוז ישראלים', False)       # 'ראלי' inside a word
     assert apply_synonyms('רמה חברתית-כלכלית - מותאמת (משולבת) (10 הגבוה ביותר)')[1] is False
+
+
+def test_cohort_year_is_not_a_period():
+    from etl.common import extract_period
+    assert extract_period('אחוז עולי 1990+ מסך האוכלוסייה') == ''
+    assert extract_period('אחוז עולי 1990+ מסך האוכלוסייה 2005') == '2005'
+
+
+def test_period_year():
+    from etl.gold import period_year
+    assert period_year('2023') == 2023
+    assert period_year('תשפ"ד 2023/24') == 2024
+    assert period_year('2020 - 2024') == 2024
+    assert period_year('2015 2014') == 2015
+    assert period_year('תשס"ח 2008/2007') == 2008
+
+
+# ---- gold / benchmarks ------------------------------------------------------------
+
+def test_measure_type():
+    from etl.benchmarks import measure_type
+    assert measure_type('דמוגרפיה › לידות חי') == 'count'
+    assert measure_type('דמוגרפיה › שיעור פטירות מתוקנן ל-1,000 תושבים') == 'rate'
+    assert measure_type('רווחה › אחוז מקבלי דמי אבטלה מבני 67-20 (שנתי)') == 'rate'
+    assert measure_type('כללי › סמל ועדת תכנון ובנייה') == 'attribute'
+
+
+def test_ses_as_of_year():
+    from etl.gold import _as_of
+    eds = [(2003, '2003', 4), (2008, '2008', 5), (2013, '2013', 6)]
+    assert _as_of(eds, 2007)[2] == 4          # latest edition published by then
+    assert _as_of(eds, 2008)[2] == 5
+    assert _as_of(eds, 2024)[2] == 6
+    assert _as_of(eds, 2001)[2] == 4          # before the first edition: the earliest one
+
+
+def test_group_stats_and_ranks_on_known_data():
+    import pandas as pd
+    from etl.benchmarks import group_stats, ranks
+    f = pd.DataFrame({
+        'indicator_id': ['X'] * 4, 'period_year': [2020] * 4, 'muni_code': [1, 2, 3, 4],
+        'value': [10.0, 20.0, 30.0, 40.0], 'population': [100, 100, 100, 700],
+        'status': ['עירייה', 'עירייה', 'מועצה מקומית', 'מועצה מקומית'],
+        'ses_cluster': [1, 1, 2, 2], 'ses_cluster_latest': [1, 1, 2, 2],
+        'ses_status': ['1|a', '1|a', '2|b', '2|b'], 'eshkol': ['גליל מזרחי', None, None, None],
+    })
+    b = group_stats(f).set_index(['group_type', 'group'])
+    assert b.loc[('national', 'all'), 'median'] == 25.0
+    assert b.loc[('national', 'all'), 'pop_weighted_mean'] == 34.0      # (10+20+30)*100+40*700 / 1000
+    assert b.loc[('ses', '2'), 'mean'] == 35.0
+    assert b.loc[('eshkol', 'גליל מזרחי'), 'n'] == 1
+    r = ranks(f).set_index('muni_code')
+    assert r.loc[4, 'pct_rank_national'] == 100.0
+    assert r.loc[3, 'pct_rank_ses'] == 50.0

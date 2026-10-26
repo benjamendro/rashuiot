@@ -1,0 +1,174 @@
+# Unit decisions from the review page (artifact db: unit_decisions), saved 2026-10-26.
+# factors: {file year: multiplier} applied to the published value of that indicator in
+# that file year. status: apply | keep | unclear.  Re-export after new decisions.
+- indicator_id: B0eac1e
+  label: עודף / גירעון בתקציב הרגיל - תקציבי (אלפי ש"ח) 2014
+  status: keep
+  factors: {}
+- indicator_id: B1f7a22
+  label: עודף / גירעון בתקציב הרגיל - שנתי (אלפי ש"ח) 2014
+  status: keep
+  factors: {}
+- indicator_id: B3a359d
+  label: תקבולים בתקציב הרגיל - לפי סוג ההכנסה › סה"כ הכנסות בתקציב בלתי רגיל
+  status: keep
+  factors: {}
+- indicator_id: B437aa5
+  label: תשלומים בתקציב הבלתי רגיל › סה"כ הוצאות בתקציב בלתי רגיל
+  status: keep
+  factors: {}
+- indicator_id: B6024f0
+  label: 'תקבולים בתקציב הרגיל - לפי סוג ההכנסה › ארנונה למגורים: יחס גבייה ב-% לכלל החיובים'
+  status: apply
+  factors:
+    2022: 100
+- indicator_id: B666525
+  label: חיובי ארנונה לפי סוג נכס - שטח באלפי מ"ר › למלאכה
+  status: apply
+  factors:
+    2007: 0.01
+    2008: 0.01
+    2009: 0.01
+    2010: 0.01
+    2011: 0.01
+    2012: 0.01
+    2013: 0.01
+    2014: 0.01
+    2015: 0.01
+    2016: 0.01
+- indicator_id: B716192
+  label: תשלומים בתקציב הרגיל › סה"כ הוצאות בתקציב הרגיל › הוצאה לנפש בתקציב הרגיל (ש"ח)
+  status: keep
+  factors: {}
+- indicator_id: B7b8c40
+  label: חיובי ארנונה לפי סוג נכס - שטח באלפי מ"ר › ליתר סוגי הנכסים
+  status: apply
+  factors:
+    2007: 0.01
+    2008: 0.01
+    2009: 0.01
+    2010: 0.01
+    2011: 0.01
+- indicator_id: Ba4faad
+  label: 'תקבולים בתקציב הרגיל - לפי סוג ההכנסה › ארנונה למגורים: יחס גבייה ב-% לחיוב השנה'
+  status: apply
+  factors:
+    2022: 100
+- indicator_id: Bccb1e6
+  label: גירעון מצטבר בסוף שנה (אלפי ש"ח) 2012
+  status: keep
+  factors: {}
+- indicator_id: Be868f9
+  label: תקבולים בתקציב הרגיל - לפי פרקי תקציב › הכנסות לנפש בתקציב הרגיל (ש"ח)
+  status: keep
+  factors: {}
+- indicator_id: Bec71ac
+  label: חיובי ארנונה לפי סוג נכס - שטח באלפי מ"ר › למבנה חקלאי
+  status: apply
+  factors:
+    2012: 0.01
+    2013: 0.01
+- indicator_id: P02ec0d
+  label: בנייה ודיור › הנחת צינורות (ק"מ) › ביוב
+  status: keep
+  factors: {}
+- indicator_id: P32dabd
+  label: דמוגרפיה › סה"כ נשים בסוף השנה
+  status: apply
+  factors:
+    2003: 1000
+    2004: 1000
+    2005: 1000
+    2006: 1000
+    2007: 1000
+    2008: 1000
+    2009: 1000
+    2010: 1000
+    2011: 1000
+    2012: 1000
+    2013: 1000
+    2014: 1000
+    2015: 1000
+    2016: 1000
+    2017: 1000
+- indicator_id: P42ecf2
+  label: אוכלוסיית דיור משותף מתוך אוכלוסיית הרשות › אחוז דיירים במוסדות אחרים
+  status: keep
+  factors: {}
+- indicator_id: P658cba
+  label: פסולת מוצקה ביתית, מסחרית וגזם (ק"ג ליום לנפש) › אחוז מחזור מתוך פסולת מוצקה ביתית, מסחרית וגזם
+  status: keep
+  factors: {}
+- indicator_id: P67300b
+  label: אוכלוסיית דיור משותף מתוך אוכלוסיית הרשות › אחוז דיירים בבתי אבות ובדיור מוגן
+  status: keep
+  factors: {}
+- indicator_id: P7394c5
+  label: כללי › מרחק מגבול מחוז תל אביב (ק"מ)
+  status: keep
+  factors: {}
+- indicator_id: P7c0bc2
+  label: שימושי קרקע קיבוץ ל-14 קטגוריות › סך הכל שטח שיפוט › בקמ"ר
+  status: keep
+  factors: {}
+- indicator_id: P8704bd
+  label: שימושי קרקע קיבוץ ל-14 קטגוריות › אוכלוסייה סוף 2021 סך הכל
+  status: apply
+  factors:
+    2014: 1000
+    2015: 1000
+    2016: 1000
+    2017: 1000
+    2018: 1000
+    2019: 1000
+    2020: 1000
+- indicator_id: Pa3a35b
+  label: אוכלוסיית דיור משותף מתוך אוכלוסיית הרשות › אחוז דיירים במוסדות דת
+  status: keep
+  factors: {}
+- indicator_id: Pbb8b45
+  label: אוכלוסיית דיור משותף מתוך אוכלוסיית הרשות › אחוז דיירים במוסדות חינוך
+  status: keep
+  factors: {}
+- indicator_id: Pe3fe55
+  label: דמוגרפיה › סה"כ גברים בסוף השנה
+  status: apply
+  factors:
+    2003: 1000
+    2004: 1000
+    2005: 1000
+    2006: 1000
+    2007: 1000
+    2008: 1000
+    2009: 1000
+    2010: 1000
+    2011: 1000
+    2012: 1000
+    2013: 1000
+    2014: 1000
+    2015: 1000
+    2016: 1000
+    2017: 1000
+- indicator_id: Pfb4027
+  label: דמוגרפיה › סה"כ אוכלוסייה בסוף השנה
+  status: apply
+  factors:
+    2003: 1000
+    2004: 1000
+    2005: 1000
+    2006: 1000
+    2007: 1000
+    2008: 1000
+    2009: 1000
+    2010: 1000
+    2011: 1000
+    2012: 1000
+    2013: 1000
+    2014: 1000
+    2015: 1000
+    2016: 1000
+    2017: 1000
+- indicator_id: Pfcdb82
+  label: אוכלוסיית דיור משותף מתוך אוכלוסיית הרשות › אחוז דיירים במוסדות אשפוז כולל הוסטלים
+  status: keep
+  factors: {}

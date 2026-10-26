@@ -79,7 +79,8 @@ def norm_label(s):
 # Hebrew school years: תשס"ח, תשע"ה, and the one-letter תש"ע
 _HEB_YEAR = r'תש(?:[א-ת]?"[א-ת]|[א-ת]{2})'
 _PERIOD_RE = re.compile(
-    rf'(?:{_HEB_YEAR}\s*)?\b(?:19|20)\d{{2}}(?:\s*[-/]\s*(?:19|20)?\d{{2}})?\b'
+    # a year followed by '+' is a cohort, not a period: 'אחוז עולי 1990+'
+    rf'(?:{_HEB_YEAR}\s*)?\b(?:19|20)\d{{2}}(?:\s*[-/]\s*(?:19|20)?\d{{2}})?\b(?!\s*\+)'
     rf'|(?<![א-ת]){_HEB_YEAR}(?![א-ת])'
 )
 
