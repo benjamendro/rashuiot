@@ -60,11 +60,29 @@ def sheet_headers(scfg, rows, ws, width):
                               scfg.get('main_row'), width, leaf_rows=scfg.get('leaf_rows', ()))
 
 
-def iter_data_rows(rows, data_start):
-    """Yield (row_idx, name, raw_code, row_type, summary_group)."""
+_FOOTNOTE_RE = re.compile(r'^(\*|\d+\s|הערה|מקור|מקרא)')
+
+
+def iter_data_rows(rows, data_start, code_col=CODE_COL):
+    """Yield (row_idx, name, raw_code, row_type, summary_group).
+
+    With code_col=None (budget sheets 2003-2008 carry names only) the data block is
+    the run of named rows after the header; the first blank name ends it, so the
+    footnotes below the table are not read as authorities.
+    """
     for i in range(data_start, len(rows)):
-        name = clean_text(rows[i][NAME_COL]).rstrip('*').strip()   # '*' marks a footnote
-        code = parse_code(rows[i][CODE_COL])
+        raw_name = clean_text(rows[i][NAME_COL])
+        name = raw_name.rstrip('*').strip()   # a trailing '*' marks a footnote reference
+        if code_col is None:
+            # a blank row or a footnote line ('* ...', '1 ...', 'הערה: ...') ends the table
+            if not name or _FOOTNOTE_RE.match(raw_name):
+                return
+            if name in SUMMARY_ROW_GROUPS:
+                yield i, name, None, 'summary', SUMMARY_ROW_GROUPS[name]
+            else:
+                yield i, name, None, 'authority', None
+            continue
+        code = parse_code(rows[i][code_col])
         if name and code is not None:
             yield i, name, code, 'authority', None
         elif name in SUMMARY_ROW_GROUPS and code is None:
@@ -110,11 +128,37 @@ class Registry:
             return None, f"name_mismatch: registry has '{cands[0]['name']}'"
         return None, 'ambiguous_code'
 
+    def resolve_name(self, name):
+        """Name-only link for sheets without a code column (weaker: logged for review).
+
+        Order per eshkol-matching/SKILL.md: exact (sanitized) -> explicit alias ->
+        fuzzy >= 0.85 with a unique best candidate. Returns (code, method) or (None, reason).
+        """
+        n = sanitize(name)
+        exact = [r for r in self.records if sanitize(r['name']) == n]
+        if len(exact) == 1:
+            return exact[0]['muni_code'], 'name_exact'
+        if len(exact) > 1:
+            return None, 'ambiguous_name'
+        alias = self.aliases.get(n)
+        aliased = [r for r in self.records if alias and sanitize(r['name']) == alias]
+        if len(aliased) == 1:
+            return aliased[0]['muni_code'], 'name_alias'
+        scored = sorted(((difflib.SequenceMatcher(None, n, sanitize(r['name'])).ratio(), r)
+                         for r in self.records), key=lambda t: -t[0])
+        if scored and scored[0][0] >= FUZZY_CUTOFF and (len(scored) == 1 or scored[1][0] < FUZZY_CUTOFF):
+            return scored[0][1]['muni_code'], f'name_fuzzy_{scored[0][0]:.2f}'
+        best = f" (closest: '{scored[0][1]['name']}' {scored[0][0]:.2f})" if scored else ''
+        return None, 'name_not_in_registry' + best
+
+    def name_of(self, code):
+        return next((r['name'] for r in self.records if r['muni_code'] == code), None)
+
 
 def extract_year(year, ycfg, root, aliases=None):
     path = os.path.join(root, ycfg['file'])
     registry = Registry(year, aliases)
-    cell_frames, col_frames, issues = [], [], []
+    cell_frames, col_frames, issues, links = [], [], [], []
 
     # registry sheets first, so other sheets can resolve codes against them
     ordered = sorted(ycfg['sheets'], key=lambda s: not s.get('registry', False))
@@ -123,16 +167,18 @@ def extract_year(year, ycfg, root, aliases=None):
         width = _trim_width(rows)
         headers = sheet_headers(scfg, rows, ws, width)
         data_start = max(scfg['header_rows'] + [scfg.get('period_row') or 0]) + 1
+        code_col = scfg.get('code_col', CODE_COL)
+        id_cols = {NAME_COL} | ({code_col} if code_col is not None else set())
 
         col_frames.append(pd.DataFrame([{
             'year': year, 'file': ycfg['file'], 'sheet': scfg['name'], 'domain': scfg['domain'],
             'part': scfg['part'], 'col': c, 'levels': ' › '.join(h['levels']),
             'n_levels': len(h['levels']), 'period_row_label': h['period'],
             'sheet_data_period': scfg.get('data_period', ''),
-        } for c, h in enumerate(headers) if c not in (NAME_COL, CODE_COL)]))
+        } for c, h in enumerate(headers) if c not in id_cols]))
 
         recs = []
-        for i, name, raw_code, row_type, group in iter_data_rows(rows, data_start):
+        for i, name, raw_code, row_type, group in iter_data_rows(rows, data_start, code_col):
             row = rows[i]
             code, status = None, None
             if row_type == 'authority':
@@ -143,6 +189,15 @@ def extract_year(year, ycfg, root, aliases=None):
                                        'raw_code': raw_code, 'issue': 'unknown_status',
                                        'detail': clean_text(row[scfg['status_col']])})
                     code = registry.add(raw_code, name, status, clean_text(row[2]))
+                elif code_col is None:
+                    code, how = registry.resolve_name(name)
+                    links.append({'year': year, 'sheet': scfg['name'], 'row': i, 'source_name': name,
+                                  'muni_code': code, 'registry_name': registry.name_of(code),
+                                  'method': how})
+                    if code is None:
+                        issues.append({'year': year, 'sheet': scfg['name'], 'row': i, 'name': name,
+                                       'raw_code': None, 'issue': 'unresolved_name', 'detail': how})
+                        continue
                 else:
                     code, how = registry.resolve(raw_code, name)
                     if code is None:
@@ -154,7 +209,7 @@ def extract_year(year, ycfg, root, aliases=None):
                         issues.append({'year': year, 'sheet': scfg['name'], 'row': i, 'name': name,
                                        'raw_code': raw_code, 'issue': kind, 'detail': how})
             for c in range(width):
-                if c in (NAME_COL, CODE_COL):
+                if c in id_cols:
                     continue
                 value, text, flag = parse_value(row[c])
                 if flag == 'blank':
@@ -173,6 +228,8 @@ def extract_year(year, ycfg, root, aliases=None):
         'cells': cells,
         'columns': pd.concat(col_frames, ignore_index=True),
         'registry': pd.DataFrame(registry.records),
+        'name_links': pd.DataFrame(links, columns=['year', 'sheet', 'row', 'source_name', 'muni_code',
+                                                   'registry_name', 'method']),
         'issues': pd.DataFrame(issues, columns=['year', 'sheet', 'row', 'name', 'raw_code',
                                                 'issue', 'detail']),
     }

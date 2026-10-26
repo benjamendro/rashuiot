@@ -1,0 +1,24 @@
+# Wording variants CBS used for the same measure in different years.
+# Applied (in order, as regex -> replacement) to each normalized label level after the
+# period tokens are removed, before cross-year matching. Every column whose label was
+# changed by a synonym is flagged for review ("label synonym applied").
+#
+# Only pure wording variants belong here. Definitional changes (e.g. the 2017
+# restructuring of the budget tables) must NOT be bridged here; they are reviewed
+# separately.
+
+# --- socio-economic index cluster (same scale direction: 10 = highest) ---
+- ['^רמה חברתית-כלכלית \(10 הגבוה ביותר\)$', 'מדד חברתי-כלכלי - אשכול (מ-1 עד 10, 1 הנמוך ביותר)']
+- ['^אשכול חברתי-כלכלי \((?:1 נמוך, 10 גבוה|10 הגבוה ביותר)\)$', 'מדד חברתי-כלכלי - אשכול (מ-1 עד 10, 1 הנמוך ביותר)']
+
+# --- peripherality index cluster (1 = most peripheral in every edition) ---
+- ['^אשכול פריפריאליות$', 'מדד פריפריאליות - אשכול (מ-1 עד 10, 1 הפריפריאלי ביותר)']
+- ['^אשכול: \(מ-1 עד 10, 1 הפריפריאלי ביותר\)$', 'אשכול (מ-1 עד 10, 1 הפריפריאלי ביותר)']
+
+# --- spelling / phrasing ---
+- ['\bראלי\b', 'ריאלי']
+- ['\bסכרת\b', 'סוכרת']
+- ['\bפיריון\b', 'פריון']
+- ['\bהשיוויון\b', 'השוויון']
+- ['\bמן התקציב', 'מהתקציב']
+- ['\bשל הרשות\b ?', '']

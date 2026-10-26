@@ -20,6 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ('..', (None, None, 'not_available')),
     ('( 2.3)', (2.3, None, 'low_reliability')),
     ('הצפון', (None, 'הצפון', 'text')),
+    ('576.650.0', (None, '576.650.0', 'malformed_number')),
     (None, (None, None, 'blank')),
 ])
 def test_parse_value(raw, expected):
@@ -136,3 +137,19 @@ def test_2017_rc_codes_normalized_and_collision_resolved():
     # the budget sheet has no status column: codes resolved through the registry
     budget = r['cells'][r['cells']['sheet'] == 'נתוני תקציב']
     assert {5501, 26, 5526} <= set(budget['muni_code'].dropna().astype(int))
+
+
+def test_hebrew_school_year_periods():
+    assert strip_period('תלמידים - סה"כ תש"ע 2009/10') == 'תלמידים - סה"כ'
+    assert strip_period('בתי ספר - סה"כ תשע"ה 2014/15') == 'בתי ספר - סה"כ'
+
+
+def test_synonyms_unify_ses_wordings_and_keep_unrelated_words():
+    from etl.harmonize import apply_synonyms
+    target = 'מדד חברתי-כלכלי - אשכול (מ-1 עד 10, 1 הנמוך ביותר)'
+    for old in ['רמה חברתית-כלכלית (10 הגבוה ביותר) 2006', 'אשכול חברתי-כלכלי 2008 (1 נמוך, 10 גבוה)',
+                'מדד חברתי-כלכלי 2013 - אשכול (מ-1 עד 10, 1 הנמוך ביותר)']:
+        out, _ = apply_synonyms(norm_label(strip_period(old)))
+        assert out == target
+    assert apply_synonyms('אחוז ישראלים') == ('אחוז ישראלים', False)       # 'ראלי' inside a word
+    assert apply_synonyms('רמה חברתית-כלכלית - מותאמת (משולבת) (10 הגבוה ביותר)')[1] is False

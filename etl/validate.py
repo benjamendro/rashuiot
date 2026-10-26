@@ -21,7 +21,8 @@ from .extract import read_grid
 from .matching import EshkolMatcher
 
 _YEAR_PATTERNS = [r'רשויות מקומיות\s+((?:19|20)\d{2})', r'שנת עדכון:\s*((?:19|20)\d{2})',
-                  r'סמל הרשות\s+((?:19|20)\d{2})', r'לשנת\s+((?:19|20)\d{2})']
+                  r'סמל הרשות\s+((?:19|20)\d{2})', r'לשנת\s+((?:19|20)\d{2})',
+                  r'מחוז\s+((?:19|20)\d{2})', r'אוכלוסייה בסוף\s+((?:19|20)\d{2})']
 
 
 class GateError(RuntimeError):

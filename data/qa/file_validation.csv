@@ -1,10 +1,23 @@
 ﻿file,configured_year,title_year,fingerprint,n_numeric_cells,status,note,duplicate_of
+2003.xls,2003.0,2003,ebe6e75033d0,34153,use,,
+2004.xls,2004.0,2004,68544c936126,37186,use,,
+2005.xls,2005.0,2005,12fee0e89187,37375,use,,
+2006.xls,2006.0,2006,210825c98793,26553,use,,
+2007.xls,2007.0,2007,4fdad3ad1aed,30495,use,,
+2008.xls,2008.0,2008,95ce779a0853,30124,use,,
+2009.xls,2009.0,2009,cb6131a2cea8,27491,use,,
+2010.xls,2010.0,2010,4572a3cf8f5b,27909,use,,
+2011.xls,2011.0,2011,6d4b6b25aa89,30425,use,,
+2012.xls,2012.0,2012,b90cd09fa4ff,32463,use,,
+2013.xls,2013.0,2013,f88921244456,33153,use,,
 2014.xls,2014.0,2014,aee9a714a6e6,40160,use,,
 2015.xls,2015.0,2015,115e3ba3e440,39818,use,,
+2016.xlsx,2016.0,2016,b25b1f44bd73,50606,use,,
 2017.xlsx,2017.0,2017,74636c68eda1,53835,use,,
 2018.xlsx,2018.0,2018,401cf21c3178,57358,use,,
+2019.xlsx,2019.0,2019,a19a03b8d95f,58149,use,,
 2020.xlsx,2020.0,2020,9c81864aac4e,57602,use,,
-p_libud_2019.xlsx,,2022,48f9366f2018,63276,excluded,"Despite its name this is the 2022 file (title ""רשויות מקומיות 2022""); after dropping two added columns (""אשכול גליל מזרחי"") every cell equals p_libud_22.xlsx. The real 2019 file is missing, as is 2016.","p_libud_2019.xlsx, p_libud_22.xlsx"
+p_libud_2019.xlsx,,2022,48f9366f2018,63276,excluded,"Despite its name this is the 2022 file (title ""רשויות מקומיות 2022""); after dropping two added columns (""אשכול גליל מזרחי"") every cell equals p_libud_22.xlsx. The real 2019 file is 2019.xlsx.","p_libud_2019.xlsx, p_libud_22.xlsx"
 p_libud_2021.xlsx,2021.0,2021,93eb1b50b0f8,60027,use,,
 p_libud_22.xlsx,2022.0,2022,48f9366f2018,63276,use,,"p_libud_2019.xlsx, p_libud_22.xlsx"
 p_libud_23.xlsx,2023.0,2023,64c0ab792b7c,61588,use,,

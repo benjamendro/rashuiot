@@ -49,9 +49,9 @@ h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
 .status[data-s="off"] .dot { background: var(--crit); }
 
 .strip { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
-.years { display: flex; gap: 4px; align-items: flex-end; direction: ltr; }
+.years { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-end; direction: ltr; max-width: 100%; }
 .yr { display: grid; justify-items: center; gap: 3px; font: 500 .7rem var(--f-num); color: var(--ink-3); }
-.yr i { width: 22px; height: 22px; border-radius: 3px; background: var(--accent); display: block; }
+.yr i { width: 18px; height: 18px; border-radius: 3px; background: var(--accent); display: block; }
 .yr.miss i { background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, transparent 3px 6px); border: 1px dashed var(--ink-3); }
 .yr.miss { color: var(--crit); font-weight: 600; }
 .legend { font-size: .8rem; color: var(--ink-2); }
@@ -186,7 +186,7 @@ details[open] summary { margin-bottom: 8px; }
       <div>
         <div class="years" id="years" aria-label="שנים בבסיס הנתונים"></div>
       </div>
-      <div class="legend">כחול = קובץ קיים · מקווקו = חסר (2019: הקובץ ב-repo הוא עותק של 2022)</div>
+      <div class="legend" id="years-legend">שנות הנתונים בבסיס</div>
       <div class="progress" id="progress"></div>
     </div>
     <nav class="tabs" role="tablist">
@@ -235,7 +235,7 @@ details[open] summary { margin-bottom: 8px; }
 <script>
 (() => {
 'use strict';
-const ALL_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
+let ALL_YEARS = [];          // filled from the data: first to last year, gaps included
 const METHOD = { exact: 'זהה', unit_variant: 'יחידה שונה', leaf: 'שינוי קטגוריה', tokens: 'סדר מילים', fuzzy: 'דמיון', new: 'חדש', override: 'ידני', override_new: 'ידני' };
 const SEV = { scale_jump: 'קפיצת סדר גודל', unit_label_conflict: 'יחידות סותרות', unit_label_partial: 'תווית חלקית' };
 const DOMAIN = { physical: 'פיזי', budget: 'תקציב', landuse: 'שימושי קרקע' };
@@ -266,6 +266,8 @@ async function boot() {
     $('#units').innerHTML = '<div class="empty">קובץ הנתונים לא נטען. רענן את הדף.</div>';
     return;
   }
+  const span = [...S.data.years_present, ...(S.data.years_missing || [])];
+  for (let y = Math.min(...span); y <= Math.max(...span); y++) ALL_YEARS.push(y);
   for (const ind of S.data.indicators) {
     S.byId[ind.id] = ind;
     ind.flagged = ind.cols.filter(c => c.why);
@@ -320,8 +322,11 @@ function renderYears() {
   const present = new Set(S.data.years_present);
   $('#years').innerHTML = ALL_YEARS.map(y => {
     const miss = !present.has(y);
-    return `<span class="yr ${miss ? 'miss' : ''}" title="${miss ? 'חסר' : 'קיים'}"><i></i>${y}</span>`;
+    return `<span class="yr ${miss ? 'miss' : ''}" title="${y}${miss ? ' · חסר' : ''}"><i></i>${String(y).slice(2)}</span>`;
   }).join('');
+  const miss = ALL_YEARS.filter(y => !present.has(y));
+  $('#years-legend').textContent = `${present.size} שנים, ${ALL_YEARS[0]}–${ALL_YEARS[ALL_YEARS.length - 1]}` +
+    (miss.length ? ` · מקווקו = חסר (${miss.join(', ')})` : ' · כל השנים קיימות');
 }
 function renderProgress() {
   if (!S.data) return;
@@ -376,7 +381,7 @@ function chart(u) {
   for (let k = lo; k <= hi; k++) g += `<line class="g" x1="${L}" x2="${W - R}" y1="${ys(k)}" y2="${ys(k)}"/><text x="${W - R + 6}" y="${ys(k) + 3}" text-anchor="start">${fnum(Math.pow(10, k))}</text>`;
   const sugg = u.suggest || {};
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${xs(i).toFixed(1)},${ys(logs[i]).toFixed(1)}`).join(' ');
-  const dots = pts.map((p, i) => `<circle class="p ${sugg[p.year] ? 'x' : ''}" cx="${xs(i).toFixed(1)}" cy="${ys(logs[i]).toFixed(1)}" r="3.5"/><text x="${xs(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${String(p.year).slice(2)}</text>`).join('');
+  const dots = pts.map((p, i) => `<circle class="p ${sugg[p.year] ? 'x' : ''}" cx="${xs(i).toFixed(1)}" cy="${ys(logs[i]).toFixed(1)}" r="3.5"/>${pts.length <= 12 || i % 2 === 0 || i === pts.length - 1 ? `<text x="${xs(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${String(p.year).slice(2)}</text>` : ''}`).join('');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="חציון לפי שנה, סולם לוגריתמי">${g}<path class="l" d="${path}"/>${dots}</svg>
     <div class="capt">חציון על פני הרשויות, סולם לוגריתמי. נקודה אדומה = שנה שההצעה משנה.</div>`;
 }

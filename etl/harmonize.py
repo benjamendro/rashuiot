@@ -55,6 +55,30 @@ def split_unit(label):
     return re.sub(r'\s+', ' ', label).strip(' -'), units
 
 
+_SYNONYMS = None
+
+
+def load_synonyms(path=None):
+    """[(compiled regex, replacement)] from config/label_synonyms.yaml (cached)."""
+    global _SYNONYMS
+    if _SYNONYMS is None or path:
+        import os
+        import yaml
+        path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config',
+                                    'label_synonyms.yaml')
+        with open(path, encoding='utf-8') as f:
+            _SYNONYMS = [(re.compile(p), r) for p, r in (yaml.safe_load(f) or [])]
+    return _SYNONYMS
+
+
+def apply_synonyms(level):
+    out = level
+    for rx, rep in load_synonyms():
+        out = rx.sub(rep, out)
+    out = re.sub(r'\s+', ' ', out).strip()
+    return out, out != level
+
+
 def describe_column(levels_str, period_row_label, sheet_data_period, year):
     """Normalized keys, unit hint and data period for one column."""
     raw_levels = [lv for lv in levels_str.split(' › ') if lv] if levels_str else []
@@ -64,8 +88,14 @@ def describe_column(levels_str, period_row_label, sheet_data_period, year):
         raw_levels = [p for p in norm_label(raw_levels[0]).split(' - ') if p]
     periods = [extract_period(lv) for lv in raw_levels]
     levels, base, units = [], [], []
+    synonym = False
+    raw_key = []                                # key before synonyms, to locate bridges
     for lv in raw_levels:
-        n = norm_label(strip_period(lv))
+        pre = norm_label(strip_period(lv))
+        if pre:
+            raw_key.append(pre)
+        n, changed = apply_synonyms(pre)
+        synonym = synonym or changed
         if not n:
             continue
         levels.append(n)
@@ -87,6 +117,7 @@ def describe_column(levels_str, period_row_label, sheet_data_period, year):
         period, src = str(year), 'file_default'
     return {
         'key': ' › '.join(levels),
+        'key_raw': ' › '.join(raw_key),
         'base_key': ' › '.join(base),
         'leaf_key': ' › '.join(levels[-2:]),
         'flat': ' '.join(levels),
@@ -95,6 +126,7 @@ def describe_column(levels_str, period_row_label, sheet_data_period, year):
         'unit_hint': ' / '.join(dict.fromkeys(UNIT_SYNONYMS.get(u, u) for u in units)),
         'data_period': period,
         'period_source': src,
+        'synonym_applied': synonym,
     }
 
 
@@ -112,12 +144,12 @@ def _similarity(a, b):
 
 class Indicator:
     __slots__ = ('id', 'group', 'label', 'keys', 'base_keys', 'leaf_keys', 'flats', 'token_sets',
-                 'slots')
+                 'slots', 'year_parts', 'ref')
 
     def __init__(self, iid, group, col):
         self.id, self.group, self.label = iid, group, col['levels']
         self.keys, self.base_keys, self.leaf_keys = set(), set(), set()
-        self.flats, self.token_sets, self.slots = [], set(), set()
+        self.flats, self.token_sets, self.slots, self.year_parts = [], set(), set(), set()
         self.absorb(col)
 
     def absorb(self, col):
@@ -129,6 +161,10 @@ class Indicator:
             self.flats.append(f)
             self.token_sets.add(tuple(_tokens(f)))
         self.slots.add(_slot(col))
+        self.year_parts.add((col['year'], col['part']))
+        # years run newest first, so the last absorbed column is the nearest in time to
+        # the year being matched next: the data guard compares against it
+        self.ref = (col['year'], col['sheet'], col['col'])
 
 
 def stable_id(group, key):
@@ -149,10 +185,40 @@ def _slot(col):
     return col['year'], col['part'], col['data_period']
 
 
-def match_columns(columns, overrides=None):
-    """Assign indicator ids to all columns. Returns (column_map, indicators, warnings)."""
+# Data guard for label-similarity matches: a candidate is rejected when the values
+# contradict it (Spearman rho over shared authorities against the indicator's column
+# nearest in time). Templated CBS labels make text similarity alone unreliable, e.g.
+# "מכוניות פרטיות - שיעור ל-1,000 תושבים" vs "שיעור פטירות מתוקנן ל-1,000 תושבים".
+MIN_RHO = {'fuzzy': 0.3, 'leaf': 0.0, 'tokens': 0.0}
+# Year-over-year change rates barely correlate between years by nature: no guard there.
+_VOLATILE_RE = re.compile(r'שינוי|גידול|לעומת')
+
+
+def _rho(a, b):
+    if a is None or b is None:
+        return None
+    j = pd.concat([a, b], axis=1, keys=['a', 'b']).dropna()
+    if len(j) < 10 or j['a'].nunique() < 2 or j['b'].nunique() < 2:
+        return None
+    r = j.rank()
+    return float(r['a'].corr(r['b']))
+
+
+def column_values(cells):
+    """{(year, sheet, col): Series(muni_code -> value)} over authority rows."""
+    a = cells[(cells['row_type'] == 'authority') & cells['value'].notna()]
+    return {k: g.groupby('muni_code')['value'].first() for k, g in a.groupby(['year', 'sheet', 'col'])}
+
+
+def match_columns(columns, overrides=None, values=None):
+    """Assign indicator ids to all columns.
+
+    Returns (column_map, indicators, warnings, guard_rejections). `values` (from
+    column_values) enables the data guard on leaf / tokens / fuzzy matches.
+    """
     overrides = overrides or {}
-    warnings = []
+    values = values or {}
+    warnings, rejected = [], []
     cols = columns.copy()
     desc = cols.apply(lambda r: describe_column(r['levels'], r['period_row_label'],
                                                 r['sheet_data_period'], r['year']), axis=1)
@@ -163,8 +229,23 @@ def match_columns(columns, overrides=None):
     indicators = []
     assign = {}                                   # col index -> (indicator, method, score)
 
-    def free(ind, c):
-        return ind.group == c['group'] and _slot(c) not in ind.slots
+    def free(ind, c, strict=False):
+        # exact label matches may add another data period of the same year (arnona 2013
+        # and 2014 in one file); weaker matches need the whole year to be free
+        if ind.group != c['group']:
+            return False
+        return (c['year'], c['part']) not in ind.year_parts if strict else _slot(c) not in ind.slots
+
+    def guard_ok(ind, c, method, score=None):
+        if _VOLATILE_RE.search(c['levels']) or _VOLATILE_RE.search(ind.label):
+            return True
+        r = _rho(values.get((c['year'], c['sheet'], c['col'])), values.get(ind.ref))
+        if r is not None and r < MIN_RHO[method]:
+            rejected.append({'year': c['year'], 'sheet': c['sheet'], 'col': c['col'], 'label': c['levels'],
+                             'candidate': ind.id, 'candidate_label': ind.label, 'method': method,
+                             'score': score, 'rho': round(r, 3)})
+            return False
+        return True
 
     for year in sorted(cols['year'].unique(), reverse=True):
         ycols = cols[cols['year'] == year]
@@ -191,10 +272,13 @@ def match_columns(columns, overrides=None):
             # deterministic passes, strongest first
             for method, attr, src in [('exact', 'keys', 'key'), ('unit_variant', 'base_keys', 'base_key'),
                                       ('leaf', 'leaf_keys', 'leaf_key')]:
+                strict = method == 'leaf'
                 for idx, c in pending.iterrows():
                     if idx in assign or not c[src]:
                         continue
-                    cands = [i for i in indicators if free(i, c) and c[src] in getattr(i, attr)]
+                    cands = [i for i in indicators if free(i, c, strict) and c[src] in getattr(i, attr)]
+                    if strict:
+                        cands = [i for i in cands if guard_ok(i, c, method)]
                     if len(cands) == 1:
                         assign[idx] = (cands[0], method, 1.0)
                         cands[0].absorb(c)
@@ -202,7 +286,8 @@ def match_columns(columns, overrides=None):
                 if idx in assign:
                     continue
                 ts = {tuple(_tokens(c['flat'])), tuple(_tokens(c['flat_no_top']))}
-                cands = [i for i in indicators if free(i, c) and ts & i.token_sets]
+                cands = [i for i in indicators if free(i, c, True) and ts & i.token_sets]
+                cands = [i for i in cands if guard_ok(i, c, 'tokens')]
                 if len(cands) == 1:
                     assign[idx] = (cands[0], 'tokens', 1.0)
                     cands[0].absorb(c)
@@ -212,7 +297,7 @@ def match_columns(columns, overrides=None):
                 if idx in assign:
                     continue
                 for ind in indicators:
-                    if not free(ind, c):
+                    if not free(ind, c, True):
                         continue
                     s = max(_similarity(a, b) for a in (c['flat'], c['flat_no_top'])
                             for b in ind.flats[-4:])
@@ -220,7 +305,7 @@ def match_columns(columns, overrides=None):
                         pairs.append((s, idx, ind))
             for s, idx, ind in sorted(pairs, key=lambda t: -t[0]):
                 c = cols.loc[idx]
-                if idx in assign or not free(ind, c):
+                if idx in assign or not free(ind, c, True) or not guard_ok(ind, c, 'fuzzy', round(s, 3)):
                     continue
                 assign[idx] = (ind, 'fuzzy', round(s, 3))
                 ind.absorb(c)
@@ -247,7 +332,7 @@ def match_columns(columns, overrides=None):
     cols['match_score'] = [assign[i][2] for i in cols.index]
     cols['matched_to'] = [assign[i][0].label for i in cols.index]
     cols['review_needed'] = cols['match_method'].isin(['fuzzy', 'leaf', 'tokens'])
-    return cols, indicators, warnings
+    return cols, indicators, warnings, pd.DataFrame(rejected)
 
 
 def column_stats(cells):
@@ -305,16 +390,40 @@ def continuity(colmap, cells):
     return pd.Series(out, name='corr_with_newer_year').rename_axis(['year', 'sheet', 'col']).reset_index()
 
 
+def synonym_bridges(colmap):
+    """Columns where a synonym joins two differently-worded runs of one indicator.
+
+    Within an indicator, columns are grouped by their wording before synonyms. The
+    newest column of every group except the newest group is where the series was
+    bridged; only that column is flagged, not every column whose label was normalized.
+    """
+    out = pd.Series(False, index=colmap.index)
+    for _, g in colmap.groupby('indicator_id'):
+        if g['key_raw'].nunique() < 2:
+            continue
+        newest_group = g.loc[g['year'].idxmax(), 'key_raw']
+        for k, sub in g.groupby('key_raw'):
+            if k != newest_group:
+                i = sub['year'].idxmax()
+                out[i] = bool(colmap.at[i, 'synonym_applied'])  # only where a synonym did the joining
+    return out
+
+
 def review_reasons(colmap, min_corr=0.5):
     """Why a mapping needs a human look ('' = none)."""
+    bridge = synonym_bridges(colmap) if 'key_raw' in colmap else pd.Series(False, index=colmap.index)
+
     def one(r):
         why = []
         if r['match_method'] == 'fuzzy':
             why.append(f"label similarity {r['match_score']}")
         elif r['match_method'] in ('leaf', 'tokens'):
             why.append(f"structural label match ({r['match_method']})")
+        if bridge[r.name] and r['match_method'] != 'new':
+            why.append('series joined across wordings (label synonym)')
         c = r.get('corr_with_newer_year')
-        if pd.notna(c) and c < min_corr and r['match_method'] != 'new':
+        if (pd.notna(c) and c < min_corr and r['match_method'] != 'new'
+                and not _VOLATILE_RE.search(r['levels'])):
             why.append(f'low continuity with next year (rho={c})')
         return '; '.join(why)
     return colmap.apply(one, axis=1)

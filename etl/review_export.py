@@ -15,6 +15,7 @@ import os
 import numpy as np
 import pandas as pd
 
+from .extract import load_config
 from .matching import EshkolMatcher
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,6 +53,7 @@ def main():
     units = pd.read_csv(os.path.join(DATA, 'silver', 'units_review.csv')).fillna('')
     cells = pd.read_parquet(os.path.join(DATA, 'bronze', 'cells.parquet'))
     files = pd.read_csv(os.path.join(DATA, 'qa', 'file_validation.csv'))
+    cfg = load_config(os.path.join(ROOT, 'etl', 'config', 'sources.yaml'))
 
     a = cells[(cells['row_type'] == 'authority') & cells['value'].notna()]
     a = a.merge(colmap[['year', 'sheet', 'col', 'indicator_id']], on=['year', 'sheet', 'col'])
@@ -87,8 +89,11 @@ def main():
                 if (v['muni_code'] == SAMPLE_CODE).any() else None,
                 'scale': scale.get(y),
             })
+        # suggest only clear order-of-magnitude scale changes (>= x100) on scale jumps;
+        # ratios of signed or volatile measures (deficits, pipe laying) mean nothing
         fix = {str(p['year']): p['scale']['k'] for p in per_year
-               if p['scale'] and p['scale']['k'] not in (None, 0)}
+               if u['severity'] == 'scale_jump' and p['scale'] and p['scale']['k'] is not None
+               and abs(p['scale']['k']) >= 2}
         eg_rows = []
         for code, name in eg_codes.items():
             s = vals[vals['muni_code'] == code].groupby('year')['value'].first()
@@ -125,7 +130,7 @@ def main():
         'generated_from': 'data/silver/*_DRAFT.csv + data/bronze/cells.parquet',
         'sample_authority': 'צפת',
         'years_present': sorted(int(y) for y in colmap['year'].unique()),
-        'years_missing': [2016, 2019],
+        'years_missing': cfg.get('missing_years', []),
         'files': files.fillna('').to_dict('records'),
         'sheets': sheets,
         'units': unit_items,

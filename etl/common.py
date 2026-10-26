@@ -76,9 +76,11 @@ def norm_label(s):
 
 
 # Data-period tokens embedded in labels: 2014, 2020-2024, 2024-25, 2023/24, תשפ"ד
+# Hebrew school years: תשס"ח, תשע"ה, and the one-letter תש"ע
+_HEB_YEAR = r'תש(?:[א-ת]?"[א-ת]|[א-ת]{2})'
 _PERIOD_RE = re.compile(
-    r'(?:תש[א-ת]"?[א-ת]\s*)?\b(?:19|20)\d{2}(?:\s*[-/]\s*(?:19|20)?\d{2})?\b'
-    r'|\bתש[א-ת]"[א-ת]\b'
+    rf'(?:{_HEB_YEAR}\s*)?\b(?:19|20)\d{{2}}(?:\s*[-/]\s*(?:19|20)?\d{{2}})?\b'
+    rf'|(?<![א-ת]){_HEB_YEAR}(?![א-ת])'
 )
 
 
@@ -101,6 +103,7 @@ def strip_period(s):
 
 _NUM_RE = re.compile(r'^-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?$')
 _PAREN_RE = re.compile(r'^\(\s*(-?\d+(?:\.\d+)?)\s*\)$')
+_MALFORMED_RE = re.compile(r'^-?\d+(?:\.\d+){2,}$')
 
 
 def parse_value(v):
@@ -110,6 +113,7 @@ def parse_value(v):
       '-'      -> flag 'dash'            nil / no cases / not applicable
       '..'     -> flag 'not_available'   data not available or suppressed
       '( 2.3)' -> value 2.3, flag 'low_reliability'  (high sampling/relative error)
+      '576.650.0' -> flag 'malformed_number'  (ambiguous separators; value left empty)
     Anything else non-numeric is kept as text (district, status, category labels).
     """
     if is_blank(v):
@@ -129,6 +133,9 @@ def parse_value(v):
     m = _PAREN_RE.match(t)
     if m:
         return float(m.group(1)), None, 'low_reliability'
+    if _MALFORMED_RE.match(t):
+        # e.g. '576.650.0' (2016 budget): ambiguous separators, never guess a value
+        return None, s, 'malformed_number'
     return None, s, 'text'
 
 
