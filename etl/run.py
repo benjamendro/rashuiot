@@ -103,7 +103,7 @@ def main():
     units.to_csv(_out('silver', 'units_review.csv'), index=False, encoding='utf-8-sig')
 
     write_report(cfg, files, registry, gate, issues, cells, summary, colmap, cat, units, name_links)
-    print('done. STOP: units are not converted - see data/silver/units_review.csv')
+    print('done. Values are as published; unit decisions (etl/config/unit_decisions.yaml) are applied in etl.gold')
 
 
 def write_report(cfg, files, registry, gate, issues, cells, summary, colmap, cat, units, name_links):
