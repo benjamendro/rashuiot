@@ -1,0 +1,139 @@
+# CBS "הרשויות המקומיות בישראל" files -> data year and sheet layout.
+# Row indices are 0-based. To add a year, add an entry here; the validator checks
+# that the year printed inside the file matches.
+#
+# layout:
+#   split   - 2003-2015: separate sheets for municipalities+local councils and for
+#             regional councils, a single header row with the year inside the label
+#             (row 0 until 2013, row 1 in 2014-2015).
+#   unified - 2016+: one sheet for all authorities, multi-row headers.
+#
+# code_col: column holding the CBS authority code (default 1). The budget sheets of
+# 2003-2008 have none: rows are linked to that year's registry by name alone and every
+# such link is listed in data/qa/name_only_links.csv.
+
+years:
+  2003:
+    file: 2003.xls
+    layout: split
+    sheets:
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [0], status_col: 4, registry: true}
+      - {name: "נתונים פיזיים - מועצות אזוריות", domain: physical, part: rc, header_rows: [0], status_col: 4, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [0], code_col: null}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [0], code_col: null}
+  2004:
+    file: 2004.xls
+    layout: split
+    sheets:
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [0], status_col: 3, registry: true}
+      - {name: "נתונים פיזיים - מועצות אזוריות", domain: physical, part: rc, header_rows: [0], status_col: 4, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [0], code_col: null}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [0], code_col: null}
+  2005:
+    file: 2005.xls
+    layout: split
+    sheets: &split_nocode
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [0], status_col: 3, registry: true}
+      - {name: "נתונים פיזיים - מ.אזוריות", domain: physical, part: rc, header_rows: [0], status_col: 3, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [0], code_col: null}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [0], code_col: null}
+  2006: {file: 2006.xls, layout: split, sheets: *split_nocode}
+  2007: {file: 2007.xls, layout: split, sheets: *split_nocode}
+  2008: {file: 2008.xls, layout: split, sheets: *split_nocode}
+  2009:
+    file: 2009.xls
+    layout: split
+    sheets: &split_code
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [0], status_col: 3, registry: true}
+      - {name: "נתונים פיזיים - מ.אזוריות", domain: physical, part: rc, header_rows: [0], status_col: 3, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [0]}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [0]}
+  2010: {file: 2010.xls, layout: split, sheets: *split_code}
+  2011: {file: 2011.xls, layout: split, summary_sheet: רשויות מקומיות, sheets: *split_code}
+  2012: {file: 2012.xls, layout: split, summary_sheet: רשויות מקומיות, sheets: *split_code}
+  2013: {file: 2013.xls, layout: split, summary_sheet: רשויות מקומיות, sheets: *split_code}
+  2014:
+    file: 2014.xls
+    layout: split
+    summary_sheet: רשויות מקומיות
+    sheets:
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [1], status_col: 3, registry: true}
+      - {name: "נתונים פיזיים - מ.אזוריות", domain: physical, part: rc, header_rows: [1], status_col: 3, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [1]}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [1]}
+      # Land use refers to 2013 and is repeated verbatim in the 2015 file; read it once.
+      - {name: "שימושי קרקע 2013, פירוט מלא", domain: landuse, part: all, header_rows: [1], data_period: "2013"}
+  2015:
+    file: 2015.xls
+    layout: split
+    summary_sheet: רשויות מקומיות
+    sheets:
+      - {name: "נתונים פיזיים - עיריות ומ.מקומי", domain: physical, part: city_lc, header_rows: [1], status_col: 3, registry: true}
+      - {name: "נתונים פיזיים - מ.אזוריות", domain: physical, part: rc, header_rows: [1], status_col: 3, registry: true}
+      - {name: "נתונים כספיים - עיריות ומ.מקומי", domain: budget, part: city_lc, header_rows: [1]}
+      - {name: "נתונים כספיים - מ.אזוריות", domain: budget, part: rc, header_rows: [1]}
+  2016:
+    file: 2016.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets:
+      - {name: "נתונים פיזיים ונתוני אוכלוסייה ", domain: physical, part: all, header_rows: [1, 2, 3, 4], period_row: 2, main_row: 3, leaf_rows: [4], status_col: 3, registry: true}
+      # budget: category row 1, main row 3, unit/change sub-row 4 (row 2 holds only the update note)
+      - {name: "נתוני תקציב", domain: budget, part: all, header_rows: [1, 3, 4], main_row: 3, leaf_rows: [4]}
+  2017:
+    file: 2017.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets: &unified_old
+      - {name: "נתונים פיזיים ונתוני אוכלוסייה ", domain: physical, part: all, header_rows: [1, 2, 3, 4], period_row: 2, main_row: 3, leaf_rows: [4], status_col: 3, registry: true}
+      - {name: "נתוני תקציב", domain: budget, part: all, header_rows: [2, 3, 4, 5, 6]}
+  2018:
+    file: 2018.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets: *unified_old
+  2019:
+    file: 2019.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets: *unified_old
+  2020:
+    file: 2020.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets: *unified_old
+  2021:
+    file: p_libud_2021.xlsx
+    layout: unified
+    summary_sheet: סיכומים לפי מעמד מוניציפלי
+    sheets: &unified_new
+      - {name: "נתונים פיזיים ונתוני אוכלוסייה ", domain: physical, part: all, header_rows: [1, 2, 3, 4], period_row: 2, main_row: 3, leaf_rows: [4], status_col: 3, registry: true}
+      - {name: "נתוני תקציב", domain: budget, part: all, header_rows: [2, 3]}
+  2022:
+    file: p_libud_22.xlsx
+    layout: unified
+    sheets: *unified_new        # from 2022 the national/status totals are rows inside each sheet
+  2023:
+    file: p_libud_23.xlsx
+    layout: unified
+    sheets: *unified_new
+  2024:
+    file: p_libud_24.xlsx
+    layout: unified
+    sheets: *unified_new
+
+# Files present in the repo that must NOT be loaded.
+excluded:
+  - file: p_libud_2019.xlsx
+    reason: >-
+      Despite its name this is the 2022 file (title "רשויות מקומיות 2022"); after
+      dropping two added columns ("אשכול גליל מזרחי") every cell equals p_libud_22.xlsx.
+      The real 2019 file is 2019.xlsx.
+
+# Years CBS published that are not in the repo yet.
+missing_years: []
+
+# Explicit name variants used by CBS for the same authority code in different sheets
+# (matching rule 3 in eshkol-matching/SKILL.md: hardcoded mapping, never guessed).
+name_aliases:
+  יהוד: יהוד-מונוסון

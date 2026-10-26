@@ -1,0 +1,46 @@
+# Identities that must hold between CBS columns of the same authority and year.
+# Indicators are named by their latest label (as in silver/indicator_catalog_DRAFT.csv).
+# A violation does not change any value: the affected values get a quality flag and are
+# listed in data/qa/consistency_violations.csv.
+#
+# kind: sum        total = sum(parts)                      tolerance: abs and/or rel
+#       sum_const  sum(parts) = value
+#       share      result = 100 * numerator / denominator
+
+- name: population = men + women
+  kind: sum
+  total: 'דמוגרפיה › סה"כ אוכלוסייה בסוף השנה'
+  parts: ['דמוגרפיה › סה"כ גברים בסוף השנה', 'דמוגרפיה › סה"כ נשים בסוף השנה']
+  tolerance_abs: 200        # published in thousands with one decimal until 2017
+  tolerance_rel: 0.01
+
+- name: age-group shares sum to 100
+  kind: sum_const
+  value: 100
+  parts: ['דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 4-0', 'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 9-5',
+          'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 14-10', 'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 19-15',
+          'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 29-20', 'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 44-30',
+          'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 59-45', 'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 64-60',
+          'דמוגרפיה › אחוז באוכלוסייה בסוף השנה › בני 65 ומעלה']
+  tolerance_abs: 1.0
+
+- name: domestic water share = domestic / total consumption
+  kind: share
+  result: 'מים › אחוז צריכת מים ביתית וכל צריכה אחרת מסה"כ צריכת המים'
+  numerator: 'מים › צריכת מים ביתית וכל צריכה אחרת (אלפי מ"ק)'
+  denominator: 'מים › סה"כ צריכת מים (אלפי מ"ק)'
+  tolerance_abs: 1.0
+
+- name: agricultural water share = agricultural / total consumption
+  kind: share
+  result: 'מים › אחוז צריכת מים חקלאית מסה"כ צריכת המים'
+  numerator: 'מים › צריכת מים חקלאית (אלפי מ"ק)'
+  denominator: 'מים › סה"כ צריכת מים (אלפי מ"ק)'
+  tolerance_abs: 1.0
+
+- name: water loss share = loss / receipts
+  kind: share
+  result: 'מים › אחוז פחת המים מסך כל תקבולי המים'
+  numerator: 'מים › פחת מים סה"כ (אלפי מ"ק)'
+  denominator: 'מים › תקבולי מים (אלפי מ"ק)'
+  tolerance_abs: 1.0

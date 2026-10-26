@@ -1,0 +1,21 @@
+﻿topic,topic_name,n_indicators
+budget_arnona,תקציב: חיובי ארנונה,63
+budget_balance,תקציב: עודף/גירעון ומלוות,21
+budget_expenditure,תקציב: הוצאות,91
+budget_revenue,תקציב: הכנסות,128
+construction_housing,בנייה ודיור,26
+crime,פשיעה ומשפט,17
+demography,דמוגרפיה,109
+education,חינוך והשכלה,65
+elections,בחירות,12
+general,כללי וגאוגרפיה,17
+health,בריאות,18
+income,שכר והכנסה,30
+indices,"מדדים: חברתי-כלכלי, פריפריאליות, קומפקטיות, טופוגרפיה",58
+land_use,שימושי קרקע,127
+rc_settlements,יישובים ומרחקים במועצות אזוריות,25
+survey,סקר: שביעות רצון,64
+transport,תחבורה,17
+waste,פסולת,2
+water,מים וביוב,39
+welfare,רווחה וביטוח לאומי,60

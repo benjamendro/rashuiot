@@ -1,0 +1,14 @@
+﻿key,value
+built_at,2026-10-26 14:07 UTC
+pipeline_commit,0ba5cbe
+source,"CBS (הלמ""ס) ""הרשויות המקומיות בישראל"" files, one per year"
+data_years,"annual series 2002–2025; files 2003–2024; reference periods range 1974–2025 (e.g. climate normals 1964–1974, a June 2025 housing register)"
+authorities,269
+indicators,"989 published + 356 derived per 1,000 residents"
+observations,"2,392,849"
+audit,20/26 checks passed (data/qa/audit.json); every source cell re-read and compared
+cbs_summary_labels_matched,6351/10332 summary-sheet values matched to an indicator
+year_semantics,"year = the data year a value describes, not the file year; see indicators.period_kind"
+unit_decisions,etl/config/unit_decisions.yaml
+mapping,cross-year mapping confidence per value in observations.mapping_confidence; manual decisions: etl/config/column_overrides.csv
+docs,data/release/README.md · data/release/schema.json · AGENTS.md

@@ -1,0 +1,448 @@
+[
+ {
+  "check": "A",
+  "name": "cell values equal the source",
+  "ok": true,
+  "critical": true,
+  "detail": "1,827,712 cells compared, 0 differ",
+  "examples": []
+ },
+ {
+  "check": "A",
+  "name": "no numeric source cell missed",
+  "ok": true,
+  "critical": true,
+  "detail": "0 numeric source cells in extracted rows were not extracted",
+  "examples": []
+ },
+ {
+  "check": "A",
+  "name": "no authority row with data skipped",
+  "ok": true,
+  "critical": true,
+  "detail": "0 source rows with a name, a code and data were not extracted",
+  "examples": []
+ },
+ {
+  "check": "A",
+  "name": "authority rows without any data (info)",
+  "ok": true,
+  "critical": false,
+  "detail": "13 rows list an authority but every value is empty (CBS footnote: data not reported)",
+  "examples": [
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    26,
+    "טייבה",
+    2730.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    50,
+    "סח'נין",
+    7500.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    99,
+    "בענה",
+    483.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    109,
+    "דאלית אל-כרמל",
+    494.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    111,
+    "דייר אל-אסד",
+    490.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    148,
+    "מג'ד אל-כרום",
+    516.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    157,
+    "מעלה אפרים",
+    3608.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    171,
+    "עספיא",
+    534.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    175,
+    "פוריידיס",
+    537.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    184,
+    "קריית ארבע",
+    3611.0
+   ],
+   [
+    2009,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    189,
+    "ראמה",
+    543.0
+   ],
+   [
+    2010,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    26,
+    "טייבה",
+    2730.0
+   ],
+   [
+    2010,
+    "נתונים כספיים - עיריות ומ.מקומי",
+    157,
+    "מעלה אפרים",
+    3608.0
+   ]
+  ]
+ },
+ {
+  "check": "A",
+  "name": "row names equal the source",
+  "ok": true,
+  "critical": true,
+  "detail": "0 rows whose name differs from the source",
+  "examples": []
+ },
+ {
+  "check": "B",
+  "name": "headers contained in labels",
+  "ok": true,
+  "critical": true,
+  "detail": "0 header cells missing from their column label",
+  "examples": []
+ },
+ {
+  "check": "A",
+  "name": "codes resolve to the same-named authority",
+  "ok": true,
+  "critical": true,
+  "detail": "11,422 rows checked, 0 mismatches",
+  "examples": []
+ },
+ {
+  "check": "A",
+  "name": "one authority per code per year",
+  "ok": true,
+  "critical": true,
+  "detail": "0 duplicated (year, code) pairs",
+  "examples": []
+ },
+ {
+  "check": "C",
+  "name": "authority counts = CBS",
+  "ok": true,
+  "critical": false,
+  "detail": "44 published counts compared, 0 differ",
+  "examples": []
+ },
+ {
+  "check": "D",
+  "name": "population by status = CBS totals",
+  "ok": true,
+  "critical": false,
+  "detail": "42 (year, status) totals compared, 0 outside tolerance",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "one primary value per indicator/authority/year",
+  "ok": true,
+  "critical": true,
+  "detail": "0 duplicate primary rows",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "every observed value has a primary",
+  "ok": true,
+  "critical": true,
+  "detail": "0 keys without exactly one primary",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "value = published x unit factor",
+  "ok": true,
+  "critical": true,
+  "detail": "0 rows differ",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "no data year more than 2 years after its file year",
+  "ok": true,
+  "critical": true,
+  "detail": "0 rows",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "data years after the file year (info)",
+  "ok": true,
+  "critical": false,
+  "detail": "13 indicators",
+  "examples": [
+   [
+    "Pbced93",
+    2004,
+    "2005"
+   ],
+   [
+    "Pbced93",
+    2005,
+    "2006"
+   ],
+   [
+    "Pbced93",
+    2006,
+    "2007"
+   ],
+   [
+    "Pbced93",
+    2007,
+    "2008"
+   ],
+   [
+    "Pbced93",
+    2008,
+    "2009"
+   ],
+   [
+    "Pbced93",
+    2009,
+    "2010"
+   ],
+   [
+    "Pbced93",
+    2010,
+    "2011"
+   ],
+   [
+    "Pe234a4",
+    2011,
+    "2012"
+   ],
+   [
+    "Pe234a4",
+    2012,
+    "2013"
+   ],
+   [
+    "Pe234a4",
+    2013,
+    "2014"
+   ],
+   [
+    "Pe234a4",
+    2014,
+    "2015"
+   ],
+   [
+    "Pe234a4",
+    2015,
+    "2016"
+   ],
+   [
+    "Pe234a4",
+    2016,
+    "יוני 2017"
+   ],
+   [
+    "Pa2a333",
+    2017,
+    "תשע\"ח 2017/18"
+   ],
+   [
+    "Pa6f797",
+    2017,
+    "2018"
+   ]
+  ]
+ },
+ {
+  "check": "E",
+  "name": "ses_cluster values are integers 1-10",
+  "ok": true,
+  "critical": true,
+  "detail": "0 out of range",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "periphery_cluster values are integers 1-10",
+  "ok": true,
+  "critical": true,
+  "detail": "0 out of range",
+  "examples": []
+ },
+ {
+  "check": "E",
+  "name": "percentages within 0-100",
+  "ok": false,
+  "critical": false,
+  "detail": "68 values in 1 percentage indicators outside 0-100",
+  "examples": [
+   [
+    "Pd442a3",
+    "מים › אחוז צריכת מים ביתית וכל צריכה אחרת מסה\"כ צריכת המים",
+    68
+   ]
+  ]
+ },
+ {
+  "check": "E",
+  "name": "population positive",
+  "ok": true,
+  "critical": true,
+  "detail": "0 non-positive",
+  "examples": []
+ },
+ {
+  "check": "F",
+  "name": "no unreviewed systematic 10x breaks",
+  "ok": false,
+  "critical": false,
+  "detail": "4 transitions in 3 indicators where >=25% of authorities jump >=10x together (not covered by a unit decision)",
+  "examples": [
+   [
+    "Pf8bc89",
+    2019,
+    2020,
+    "103/223",
+    "חינוך והשכלה › עובדי הוראה › אחוז עובדי הוראה משתלמים מכלל עובדי הוראה"
+   ],
+   [
+    "Pf8bc89",
+    2018,
+    2019,
+    "101/221",
+    "חינוך והשכלה › עובדי הוראה › אחוז עובדי הוראה משתלמים מכלל עובדי הוראה"
+   ],
+   [
+    "P93c81a",
+    2004,
+    2013,
+    "25/82",
+    "מבנים חקלאיים ללא אפיון 2013 -אחוז משטח השיפוט"
+   ],
+   [
+    "Be07418",
+    2012,
+    2013,
+    "11/41",
+    "חיובי ארנונה לפי סוג נכס - באלפי ש\"ח › למבנה חקלאי"
+   ]
+  ]
+ },
+ {
+  "check": "G",
+  "name": "population = men + women",
+  "ok": true,
+  "critical": false,
+  "detail": "5,600 authority-years checked, 0 violate the identity",
+  "examples": []
+ },
+ {
+  "check": "G",
+  "name": "age-group shares sum to 100",
+  "ok": true,
+  "critical": false,
+  "detail": "5,600 authority-years checked, 0 violate the identity",
+  "examples": []
+ },
+ {
+  "check": "G",
+  "name": "domestic water share = domestic / total consumption",
+  "ok": false,
+  "critical": false,
+  "detail": "1,995 authority-years checked, 393 violate the identity",
+  "examples": [
+   [
+    2023,
+    198
+   ],
+   [
+    2022,
+    195
+   ]
+  ]
+ },
+ {
+  "check": "G",
+  "name": "agricultural water share = agricultural / total consumption",
+  "ok": false,
+  "critical": false,
+  "detail": "2,500 authority-years checked, 173 violate the identity",
+  "examples": [
+   [
+    2023,
+    88
+   ],
+   [
+    2022,
+    85
+   ]
+  ]
+ },
+ {
+  "check": "G",
+  "name": "water loss share = loss / receipts",
+  "ok": false,
+  "critical": false,
+  "detail": "4,323 authority-years checked, 2 violate the identity",
+  "examples": [
+   [
+    2011,
+    1
+   ],
+   [
+    2016,
+    1
+   ]
+  ]
+ },
+ {
+  "check": "H",
+  "name": "no mixed fraction/percent scale within a column",
+  "ok": false,
+  "critical": false,
+  "detail": "1 indicator-years mix fractions and percentages",
+  "examples": [
+   [
+    "Pf8bc89",
+    2019,
+    108,
+    129,
+    "חינוך והשכלה › עובדי הוראה › אחוז עובדי הוראה משתלמים מכלל עובדי הוראה"
+   ]
+  ]
+ }
+]
