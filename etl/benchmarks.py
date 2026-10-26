@@ -49,8 +49,10 @@ def attach_attributes(f, ay):
     a = ay[['muni_code', 'year', 'status', 'ses_cluster', 'ses_cluster_latest', 'eshkol',
             'population']].copy()
     a['year'] = a['year'].astype('int64')
+    a['muni_code'] = a['muni_code'].astype('int64')
     f = f.copy()
     f['period_year'] = f['period_year'].astype('int64')
+    f['muni_code'] = f['muni_code'].astype('int64')
     f['_ord'] = np.arange(len(f))
     f = f.sort_values('period_year')
     a = a.sort_values('year')
@@ -215,6 +217,27 @@ README_ROWS = [
 ]
 
 
+HEB_COLS = {
+    'name': 'רשות', 'muni_code': 'סמל', 'eshkol': 'אשכול', 'status': 'מעמד',
+    'ses_cluster': 'אשכול חב"כ (לשנת הנתון)', 'ses_cluster_latest': 'אשכול חב"כ (מהדורה אחרונה)',
+    'indicator_id': 'מזהה מדד', 'label_latest': 'מדד', 'measure_type': 'סוג מדד', 'domain': 'תחום',
+    'period_year': 'שנת נתון', 'data_period': 'תקופה', 'value': 'ערך', 'unit_hint': 'יחידה',
+    'low_reliability': 'אומדן לא אמין', 'mapping_review': 'מיפוי לבדיקה',
+    'nat_n': 'ארצי: מס\' רשויות', 'nat_median': 'ארצי: חציון', 'nat_mean': 'ארצי: ממוצע',
+    'nat_p25': 'ארצי: רבעון 1', 'nat_p75': 'ארצי: רבעון 3', 'nat_pop_weighted_mean': 'ארצי: ממוצע משוקלל',
+    'cbs_national': 'ארצי רשמי (למ"ס)', 'pct_rank_national': 'אחוזון ארצי',
+    'diff_nat_median': 'פער מחציון ארצי', 'diff_nat_median_pct': 'פער מחציון ארצי (%)',
+    'ses_n': 'אשכול חב"כ: מס\' רשויות', 'ses_median': 'אשכול חב"כ: חציון', 'ses_mean': 'אשכול חב"כ: ממוצע',
+    'pct_rank_ses': 'אחוזון באשכול חב"כ', 'z_ses': 'ציון z באשכול חב"כ',
+    'diff_ses_median': 'פער מחציון האשכול', 'diff_ses_median_pct': 'פער מחציון האשכול (%)',
+    'seslatest_n': 'אשכול חב"כ אחרון: מס\' רשויות', 'seslatest_median': 'אשכול חב"כ אחרון: חציון',
+    'status_n': 'אותו מעמד: מס\' רשויות', 'status_median': 'אותו מעמד: חציון',
+    'sesstatus_n': 'אשכול×מעמד: מס\' רשויות', 'sesstatus_median': 'אשכול×מעמד: חציון',
+    'cluster_n': 'גליל מזרחי: מס\' רשויות', 'cluster_median': 'גליל מזרחי: חציון',
+    'cluster_mean': 'גליל מזרחי: ממוצע',
+}
+
+
 def write_workbook(eg, ay, dim, cat):
     path = _out('gold', 'eastern_galilee.xlsx')
     latest = eg.sort_values('period_year').groupby(['muni_code', 'indicator_id']).tail(1)
@@ -227,13 +250,13 @@ def write_workbook(eg, ay, dim, cat):
             ('population', 'ses_cluster', 'periphery_cluster')}
     used = cat[cat['indicator_id'].isin(eg['indicator_id'].unique())]
     with pd.ExcelWriter(path, engine='openpyxl') as xw:
-        pd.DataFrame(README_ROWS, columns=['נושא', 'הסבר']).to_excel(xw, 'קרא אותי', index=False)
-        prof.to_excel(xw, 'רשויות', index=False)
-        wide['population'].round(0).to_excel(xw, 'אוכלוסייה לפי שנה')
-        wide['ses_cluster'].to_excel(xw, 'אשכול חברתי-כלכלי לפי שנה')
-        wide['periphery_cluster'].to_excel(xw, 'אשכול פריפריאליות לפי שנה')
-        latest.to_excel(xw, 'השוואה - שנה אחרונה', index=False)
-        used.to_excel(xw, 'מדדים', index=False)
+        pd.DataFrame(README_ROWS, columns=['נושא', 'הסבר']).to_excel(xw, sheet_name='קרא אותי', index=False)
+        prof.to_excel(xw, sheet_name='רשויות', index=False)
+        wide['population'].round(0).to_excel(xw, sheet_name='אוכלוסייה לפי שנה')
+        wide['ses_cluster'].to_excel(xw, sheet_name='אשכול חברתי-כלכלי לפי שנה')
+        wide['periphery_cluster'].to_excel(xw, sheet_name='אשכול פריפריאליות לפי שנה')
+        latest.round(3).rename(columns=HEB_COLS).to_excel(xw, sheet_name='השוואה - שנה אחרונה', index=False)
+        used.to_excel(xw, sheet_name='מדדים', index=False)
         for ws in xw.book.worksheets:
             ws.sheet_view.rightToLeft = True
             ws.freeze_panes = 'B2'
