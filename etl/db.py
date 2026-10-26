@@ -2,7 +2,7 @@
 
     from etl.db import connect
     con = connect()
-    con.sql("SELECT table_name, comment FROM duckdb_views() WHERE NOT internal")
+    con.sql("SELECT view_name, comment FROM duckdb_views() WHERE NOT internal")
     con.sql("SELECT column_name, comment FROM duckdb_columns() WHERE table_name = 'observations'")
 
 Views read data/release/parquet/*.parquet; every table and column carries its

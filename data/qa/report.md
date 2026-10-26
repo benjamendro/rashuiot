@@ -60,11 +60,11 @@ All Eshkol authorities were found in every year by code **and** name (regional-c
 | 2017 | 255 | 388 | 97,714 | 16,271 | 6,696 | 179 |
 | 2018 | 255 | 400 | 101,837 | 16,969 | 5,946 | 159 |
 | 2019 | 255 | 405 | 102,899 | 16,670 | 6,354 | 196 |
-| 2020 | 255 | 405 | 103,093 | 17,643 | 6,648 | 155 |
-| 2021 | 255 | 406 | 103,368 | 9,241 | 6,122 | 170 |
+| 2020 | 255 | 405 | 103,093 | 17,643 | 6,649 | 155 |
+| 2021 | 255 | 406 | 103,368 | 9,241 | 6,123 | 170 |
 | 2022 | 256 | 419 | 108,346 | 9,283 | 6,616 | 96 |
-| 2023 | 257 | 429 | 106,562 | 9,053 | 6,242 | 84 |
-| 2024 | 257 | 429 | 111,271 | 7,462 | 6,416 | 70 |
+| 2023 | 257 | 429 | 106,562 | 9,053 | 6,261 | 84 |
+| 2024 | 257 | 429 | 111,271 | 7,463 | 6,416 | 70 |
 
 Summary rows (national/status totals): 10,350 cells from transposed sheets (2011-2021) + 3,766 cells from in-sheet rows (2022-2024).
 
@@ -89,14 +89,15 @@ Code-resolution notes:
 
 | method | columns |
 |---|---|
-| exact | 9409 |
-| new | 990 |
+| exact | 9403 |
+| new | 989 |
 | fuzzy | 364 |
-| tokens | 310 |
+| tokens | 309 |
 | leaf | 111 |
 | unit_variant | 47 |
+| override | 8 |
 
-Indicators: 990; in all 22 years: 98; flagged for review: 493.
+Indicators: 989; in all 22 years: 100; flagged for review: 492.
 
 Data guard: 7 label-similarity matches were rejected because the values contradict them (Spearman rho against the nearest year below the threshold). The columns stay separate and are flagged for review (`qa/match_guard_rejections.csv`):
 

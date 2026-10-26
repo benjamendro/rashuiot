@@ -1,4 +1,6 @@
 key indicators: {'population': 'Pfb4027', 'ses_cluster': 'Pb5ba90', 'ses_value': 'Pf5b7cc', 'ses_rank': 'P800437', 'periphery_cluster': 'Pb3b1f0'}
 Pb5ba90: file 2004 edition inferred = 2003 (100% identical to file 2005)
 Pb5ba90: file 2003 edition unspecified (84% identical to file 2004); dated 2002 for ordering only
-70,665 (indicator, authority, year) reported by more than one file; 2,910 of them with different values (newest file kept as primary)
+measure types: {'rate': 564, 'count': 357, 'index': 52, 'attribute': 16}; 71 reclassified by the data check
+'-' (no cases) stored as 0 for count measures: 111,585 cells
+78,983 (indicator, authority, year) reported by more than one file; 3,583 of them with different values (newest file kept as primary)

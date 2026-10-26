@@ -1,0 +1,1060 @@
+{
+ "name": "rashuiot — CBS local authorities database (Israel), 2003–2024",
+ "about": {
+  "built_at": "2026-10-26 13:55 UTC",
+  "pipeline_commit": "ae921b1",
+  "source": "CBS (הלמ\"ס) \"הרשויות המקומיות בישראל\" files, one per year",
+  "data_years": "annual series 2002–2025; files 2003–2024; reference periods range 1974–2025 (e.g. climate normals 1964–1974, a June 2025 housing register)",
+  "authorities": "269",
+  "indicators": "989 published + 356 derived per 1,000 residents",
+  "observations": "2,392,849",
+  "audit": "20/26 checks passed (data/qa/audit.json); every source cell re-read and compared",
+  "cbs_summary_labels_matched": "6351/10332 summary-sheet values matched to an indicator",
+  "year_semantics": "year = the data year a value describes, not the file year; see indicators.period_kind",
+  "unit_decisions": "etl/config/unit_decisions.yaml",
+  "mapping": "cross-year mapping confidence per value in observations.mapping_confidence; manual decisions: etl/config/column_overrides.csv",
+  "docs": "data/release/README.md · data/release/schema.json · AGENTS.md"
+ },
+ "how_to_open": {
+  "duckdb": "import duckdb; con = duckdb.connect(); con.execute(open('data/release/open.sql').read())",
+  "python": "from etl.db import connect; con = connect()",
+  "pandas": "pd.read_parquet('data/release/parquet/<table>.parquet')"
+ },
+ "tables": [
+  {
+   "name": "about",
+   "grain": "key",
+   "primary_key": [
+    "key"
+   ],
+   "description_he": "מידע על הבנייה: תאריך, מקורות, שנים, סיכום הבדיקות.",
+   "description_en": "Build information: date, sources, years, audit summary.",
+   "rows": 13,
+   "files": {
+    "parquet": "data/release/parquet/about.parquet",
+    "csv": "data/release/csv/about.csv"
+   },
+   "columns": [
+    {
+     "name": "key",
+     "type": "str",
+     "description_he": "שם הפריט",
+     "description_en": "item"
+    },
+    {
+     "name": "value",
+     "type": "str",
+     "description_he": "ערך",
+     "description_en": "value"
+    }
+   ]
+  },
+  {
+   "name": "topics",
+   "grain": "topic",
+   "primary_key": [
+    "topic"
+   ],
+   "description_he": "נושאים קבועים לקיבוץ מדדים, עם מספר המדדים בכל נושא.",
+   "description_en": "Stable topics grouping the indicators, with the number of indicators in each.",
+   "rows": 20,
+   "files": {
+    "parquet": "data/release/parquet/topics.parquet",
+    "csv": "data/release/csv/topics.csv"
+   },
+   "columns": [
+    {
+     "name": "topic",
+     "type": "str",
+     "description_he": "מפתח הנושא (אנגלית)",
+     "description_en": "topic key"
+    },
+    {
+     "name": "topic_name",
+     "type": "str",
+     "description_he": "שם הנושא",
+     "description_en": "topic name (Hebrew)"
+    },
+    {
+     "name": "n_indicators",
+     "type": "int64",
+     "description_he": "מספר מדדים בנושא",
+     "description_en": "number of indicators"
+    }
+   ]
+  },
+  {
+   "name": "indicators",
+   "grain": "indicator",
+   "primary_key": [
+    "indicator_id"
+   ],
+   "description_he": "קטלוג המדדים: מה קיים, לאילו שנים, באיזו איכות ומה קשור למה. נקודת הפתיחה לכל שאילתה.",
+   "description_en": "Indicator catalogue: what exists, for which years, at what quality and how indicators relate. Start every query here.",
+   "rows": 1345,
+   "files": {
+    "parquet": "data/release/parquet/indicators.parquet",
+    "csv": "data/release/csv/indicators.csv"
+   },
+   "columns": [
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה יציב. P = נתונים פיזיים ואוכלוסייה, B = תקציב. סיומת _k = נגזר ל-1,000 תושבים",
+     "description_en": "stable id. P = physical/population sheets, B = budget sheets. Suffix _k = derived per 1,000 residents"
+    },
+    {
+     "name": "name",
+     "type": "str",
+     "description_he": "שם המדד בלי שנים והערות שוליים, רמות מופרדות ב-›",
+     "description_en": "indicator name without years or footnote marks; levels joined by ›"
+    },
+    {
+     "name": "full_label",
+     "type": "str",
+     "description_he": "הכותרת המלאה כפי שהופיעה בקובץ האחרון",
+     "description_en": "full header as printed in the latest file"
+    },
+    {
+     "name": "topic",
+     "type": "str",
+     "description_he": "נושא (ראו טבלת topics)",
+     "description_en": "topic (see topics)"
+    },
+    {
+     "name": "topic_name",
+     "type": "str",
+     "description_he": "שם הנושא",
+     "description_en": "topic name"
+    },
+    {
+     "name": "domain",
+     "type": "str",
+     "description_he": "גיליון מקור: physical / budget / landuse / derived",
+     "description_en": "source sheet family"
+    },
+    {
+     "name": "measure_type",
+     "type": "str",
+     "description_he": "count = כמות מוחלטת (גדלה עם גודל הרשות) · rate = שיעור/אחוז/ממוצע · index = מדד מורכב/אשכול/דירוג · attribute = תכונה/מזהה",
+     "description_en": "count | rate | index | attribute"
+    },
+    {
+     "name": "measure_type_basis",
+     "type": "str",
+     "description_he": "על מה מבוסס הסיווג: label, או בדיקת נתונים שתיקנה אותו",
+     "description_en": "basis of measure_type: label, or a data check that corrected it"
+    },
+    {
+     "name": "value_type",
+     "type": "str",
+     "description_he": "numeric או text (למשל מחוז, רמת פריפריאליות בקטגוריות)",
+     "description_en": "numeric or text"
+    },
+    {
+     "name": "unit",
+     "type": "str",
+     "description_he": "יחידה (אחרי המרת יחידות). ריק = לא צוינה בכותרת",
+     "description_en": "unit after unit decisions; empty = not stated in the header"
+    },
+    {
+     "name": "unit_note",
+     "type": "str",
+     "description_he": "המרות יחידה שהוחלו, לפי שנות קובץ",
+     "description_en": "unit conversions applied, by file year"
+    },
+    {
+     "name": "period_kind",
+     "type": "str",
+     "description_he": "calendar_year · school_year (שנת לימודים, השנה = שנת הסיום) · multi_year (ממוצע רב-שנתי, השנה = שנת הסיום) · reference_year (מהדורת מדד / שנת ייחוס)",
+     "description_en": "what `year` means for this indicator"
+    },
+    {
+     "name": "first_year",
+     "type": "Int64",
+     "description_he": "שנת הנתון הראשונה עם ערך",
+     "description_en": "first data year with a value"
+    },
+    {
+     "name": "last_year",
+     "type": "Int64",
+     "description_he": "שנת הנתון האחרונה עם ערך",
+     "description_en": "last data year with a value"
+    },
+    {
+     "name": "n_years",
+     "type": "int64",
+     "description_he": "מספר שנות נתון עם ערך",
+     "description_en": "number of data years with a value"
+    },
+    {
+     "name": "years",
+     "type": "str",
+     "description_he": "כל שנות הנתון עם ערך, מופרדות בפסיקים",
+     "description_en": "all data years with a value"
+    },
+    {
+     "name": "missing_years",
+     "type": "str",
+     "description_he": "שנים בתוך הטווח שאין בהן ערך",
+     "description_en": "years inside the range without a value"
+    },
+    {
+     "name": "n_authorities_last_year",
+     "type": "int64",
+     "description_he": "מספר רשויות עם ערך בשנה האחרונה",
+     "description_en": "authorities with a value in the last year"
+    },
+    {
+     "name": "applies_to",
+     "type": "str",
+     "description_he": "מעמדות הרשויות שיש להן ערכים (עירייה / מועצה מקומית / מועצה אזורית)",
+     "description_en": "municipal statuses that have values"
+    },
+    {
+     "name": "quality_flags",
+     "type": "str",
+     "description_he": "סיכום בעיות איכות ידועות במדד (ריק = אין)",
+     "description_en": "summary of known quality issues (empty = none)"
+    },
+    {
+     "name": "mapping_uncertain_columns",
+     "type": "int64",
+     "description_he": "מספר עמודות מקור שהשיוך שלהן לסדרה ברמת ביטחון medium/low",
+     "description_en": "source columns mapped with medium/low confidence"
+    },
+    {
+     "name": "revised_values",
+     "type": "int64",
+     "description_he": "מספר ערכים שקובץ מאוחר דיווח עליהם ערך שונה",
+     "description_en": "values a later file revised"
+    },
+    {
+     "name": "consistency_violations",
+     "type": "int64",
+     "description_he": "מספר ערכים שסותרים זהות פנימית בנתוני הלמ\"ס (למשל אחוז ≠ מונה/מכנה)",
+     "description_en": "values violating an internal identity of the CBS data"
+    },
+    {
+     "name": "mixed_scale_values",
+     "type": "int64",
+     "description_he": "מספר ערכים שנראים כשבר בעמודה של אחוזים (בעיה בקובץ המקור)",
+     "description_en": "values that look like fractions inside a percentage column (source problem)"
+    },
+    {
+     "name": "systematic_breaks",
+     "type": "str",
+     "description_he": "מעברי שנים שבהם רבות מהרשויות קופצות פי 10 ומעלה יחד (שינוי יחידה/הגדרה לא מטופל)",
+     "description_en": "year transitions where many authorities jump >=10x together"
+    },
+    {
+     "name": "estimate_share",
+     "type": "float64",
+     "description_he": "שיעור הערכים שהם אומדן (בסוגריים במקור)",
+     "description_en": "share of values that are estimates"
+    },
+    {
+     "name": "same_values_as",
+     "type": "str",
+     "description_he": "מדדים עם ערכים זהים (אותו נתון שפורסם בשני מקומות)",
+     "description_en": "indicators with identical values (the same data published twice)"
+    },
+    {
+     "name": "continues",
+     "type": "str",
+     "description_he": "מדדים שייתכן שהם אותה סדרה לפני שינוי ניסוח/מבנה (לא אוחדו; לבדיקה)",
+     "description_en": "indicators that may be this series before a wording/structure change (not merged)"
+    },
+    {
+     "name": "continued_by",
+     "type": "str",
+     "description_he": "מדדים שייתכן שהם המשך הסדרה (לא אוחדו; לבדיקה)",
+     "description_en": "indicators that may continue this series (not merged)"
+    },
+    {
+     "name": "derived_from",
+     "type": "str",
+     "description_he": "למדד נגזר: המדד שממנו חושב",
+     "description_en": "for a derived indicator: its base indicator"
+    },
+    {
+     "name": "label_history",
+     "type": "str",
+     "description_he": "הכותרות בקבצי המקור לפי שנות קובץ",
+     "description_en": "source headers by file year"
+    },
+    {
+     "name": "source_columns",
+     "type": "int64",
+     "description_he": "מספר עמודות מקור שמרכיבות את המדד",
+     "description_en": "number of source columns forming the indicator"
+    }
+   ]
+  },
+  {
+   "name": "coverage",
+   "grain": "indicator × year",
+   "primary_key": [
+    "indicator_id",
+    "year"
+   ],
+   "description_he": "זמינות: לכל מדד ושנה, כמה רשויות יש להן ערך, \"אין מקרים\", \"לא ידוע\", אומדן.",
+   "description_en": "Availability per indicator and year: authorities with a value, nil, not available, estimate.",
+   "rows": 10548,
+   "files": {
+    "parquet": "data/release/parquet/coverage.parquet",
+    "csv": "data/release/csv/coverage.csv"
+   },
+   "columns": [
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד",
+     "description_en": "indicator id"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת נתון",
+     "description_en": "data year"
+    },
+    {
+     "name": "n_authorities",
+     "type": "int64",
+     "description_he": "מספר הרשויות הקיימות באותה שנה",
+     "description_en": "authorities existing that year"
+    },
+    {
+     "name": "n_values",
+     "type": "int64",
+     "description_he": "רשויות עם ערך (מספר או טקסט)",
+     "description_en": "authorities with a value"
+    },
+    {
+     "name": "n_nil",
+     "type": "int64",
+     "description_he": "רשויות שסומנו \"-\" (אין מקרים)",
+     "description_en": "authorities marked \"-\" (no cases)"
+    },
+    {
+     "name": "n_not_available",
+     "type": "int64",
+     "description_he": "רשויות שסומנו \"..\" (לא ידוע / לא לפרסום)",
+     "description_en": "authorities marked \"..\" (unknown / not publishable)"
+    },
+    {
+     "name": "n_estimate",
+     "type": "int64",
+     "description_he": "ערכים שהם אומדן",
+     "description_en": "values that are estimates"
+    },
+    {
+     "name": "n_east_galilee",
+     "type": "int64",
+     "description_he": "רשויות הגליל המזרחי עם ערך",
+     "description_en": "East Galilee authorities with a value"
+    },
+    {
+     "name": "n_west_galilee",
+     "type": "int64",
+     "description_he": "רשויות הגליל המערבי עם ערך",
+     "description_en": "West Galilee authorities with a value"
+    },
+    {
+     "name": "share_with_value",
+     "type": "float64",
+     "description_he": "n_values / n_authorities",
+     "description_en": "n_values / n_authorities"
+    }
+   ]
+  },
+  {
+   "name": "authorities",
+   "grain": "authority",
+   "primary_key": [
+    "muni_code"
+   ],
+   "description_he": "הרשויות המקומיות (כל מי שהופיעה בשנה כלשהי), עם שיוך לאשכול.",
+   "description_en": "Local authorities (any that appeared in any year), with Eshkol membership.",
+   "rows": 269,
+   "files": {
+    "parquet": "data/release/parquet/authorities.parquet",
+    "csv": "data/release/csv/authorities.csv"
+   },
+   "columns": [
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות בלמ\"ס (סכמת 2024: מועצה אזורית = 5500 + מספר)",
+     "description_en": "CBS authority code (2024 scheme: regional council = 5500 + number)"
+    },
+    {
+     "name": "name",
+     "type": "str",
+     "description_he": "השם בקובץ האחרון שבו הופיעה",
+     "description_en": "name in the latest file it appears in"
+    },
+    {
+     "name": "status",
+     "type": "str",
+     "description_he": "מעמד מוניציפלי אחרון",
+     "description_en": "latest municipal status"
+    },
+    {
+     "name": "district",
+     "type": "str",
+     "description_he": "מחוז אחרון",
+     "description_en": "latest district"
+    },
+    {
+     "name": "first_year",
+     "type": "int64",
+     "description_he": "השנה הראשונה שבה הופיעה",
+     "description_en": "first year present"
+    },
+    {
+     "name": "last_year",
+     "type": "int64",
+     "description_he": "השנה האחרונה שבה הופיעה",
+     "description_en": "last year present"
+    },
+    {
+     "name": "n_years",
+     "type": "int64",
+     "description_he": "מספר שנים שבהן הופיעה",
+     "description_en": "years present"
+    },
+    {
+     "name": "eshkol",
+     "type": "str",
+     "description_he": "אשכול: גליל מזרחי / גליל מערבי / ריק",
+     "description_en": "Eshkol cluster or empty"
+    },
+    {
+     "name": "eshkol_name",
+     "type": "str",
+     "description_he": "השם ברשימת האשכול",
+     "description_en": "name in the Eshkol list"
+    },
+    {
+     "name": "sector",
+     "type": "str",
+     "description_he": "מגזר (לרשויות האשכול)",
+     "description_en": "sector (Eshkol authorities)"
+    },
+    {
+     "name": "settlement_form",
+     "type": "str",
+     "description_he": "צורת יישוב (לרשויות האשכול)",
+     "description_en": "settlement form (Eshkol authorities)"
+    },
+    {
+     "name": "aliases",
+     "type": "str",
+     "description_he": "כל הכתיבים המוכרים, מופרדים ב-|",
+     "description_en": "all known spellings, |-separated"
+    }
+   ]
+  },
+  {
+   "name": "authority_aliases",
+   "grain": "alias × authority",
+   "primary_key": [
+    "alias",
+    "muni_code"
+   ],
+   "description_he": "כל כתיב של שם רשות (למ\"ס לאורך השנים, רשימת האשכול) → סמל. לחיפוש לפי שם השתמשו ב-alias_normalized.",
+   "description_en": "Every spelling of an authority name → code. Search on alias_normalized.",
+   "rows": 303,
+   "files": {
+    "parquet": "data/release/parquet/authority_aliases.parquet",
+    "csv": "data/release/csv/authority_aliases.csv"
+   },
+   "columns": [
+    {
+     "name": "alias",
+     "type": "str",
+     "description_he": "הכתיב כפי שהופיע",
+     "description_en": "spelling as it appeared"
+    },
+    {
+     "name": "alias_normalized",
+     "type": "str",
+     "description_he": "הכתיב אחרי ניקוי (בלי גרשיים, מקפים, סוגריים)",
+     "description_en": "normalized: no quotes, hyphens, brackets"
+    },
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות",
+     "description_en": "authority code"
+    },
+    {
+     "name": "source",
+     "type": "str",
+     "description_he": "מקור הכתיב",
+     "description_en": "where the spelling comes from"
+    }
+   ]
+  },
+  {
+   "name": "authority_year",
+   "grain": "authority × year",
+   "primary_key": [
+    "muni_code",
+    "year"
+   ],
+   "description_he": "מאפייני רשות לפי שנה: מעמד, אוכלוסייה, אשכול חברתי-כלכלי ופריפריאליות.",
+   "description_en": "Authority attributes by year: status, population, socio-economic and peripherality clusters.",
+   "rows": 5600,
+   "files": {
+    "parquet": "data/release/parquet/authority_year.parquet",
+    "csv": "data/release/csv/authority_year.csv"
+   },
+   "columns": [
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות",
+     "description_en": "authority code"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנה (שנת הקובץ)",
+     "description_en": "year (file year)"
+    },
+    {
+     "name": "name",
+     "type": "str",
+     "description_he": "השם באותה שנה",
+     "description_en": "name that year"
+    },
+    {
+     "name": "status",
+     "type": "str",
+     "description_he": "מעמד מוניציפלי באותה שנה",
+     "description_en": "municipal status that year"
+    },
+    {
+     "name": "district",
+     "type": "str",
+     "description_he": "מחוז באותה שנה",
+     "description_en": "district that year"
+    },
+    {
+     "name": "population",
+     "type": "float64",
+     "description_he": "אוכלוסייה בסוף השנה (נפשות)",
+     "description_en": "population at year end (persons)"
+    },
+    {
+     "name": "ses_cluster",
+     "type": "float64",
+     "description_he": "אשכול חברתי-כלכלי 1–10 לפי המהדורה האחרונה שפורסמה עד אותה שנה",
+     "description_en": "SES cluster 1-10, latest edition published by that year"
+    },
+    {
+     "name": "ses_value",
+     "type": "float64",
+     "description_he": "ערך המדד החברתי-כלכלי באותה מהדורה",
+     "description_en": "SES index value, same edition"
+    },
+    {
+     "name": "ses_edition",
+     "type": "str",
+     "description_he": "שנת מהדורת המדד החברתי-כלכלי שבה השתמשנו",
+     "description_en": "SES edition used"
+    },
+    {
+     "name": "ses_cluster_latest",
+     "type": "float64",
+     "description_he": "אשכול חברתי-כלכלי במהדורה האחרונה (קבוצת השוואה קבועה לאורך השנים)",
+     "description_en": "SES cluster in the latest edition (fixed peer group)"
+    },
+    {
+     "name": "ses_edition_latest",
+     "type": "float64",
+     "description_he": "שנת המהדורה האחרונה",
+     "description_en": "latest SES edition"
+    },
+    {
+     "name": "periphery_cluster",
+     "type": "float64",
+     "description_he": "אשכול פריפריאליות 1–10 (1 = הפריפריאלי ביותר)",
+     "description_en": "peripherality cluster 1-10 (1 = most peripheral)"
+    },
+    {
+     "name": "periphery_edition",
+     "type": "float64",
+     "description_he": "מהדורת מדד הפריפריאליות",
+     "description_en": "peripherality edition"
+    },
+    {
+     "name": "eshkol",
+     "type": "str",
+     "description_he": "אשכול: גליל מזרחי / גליל מערבי / ריק",
+     "description_en": "Eshkol cluster or empty"
+    }
+   ]
+  },
+  {
+   "name": "observations",
+   "grain": "authority × indicator × year",
+   "primary_key": [
+    "muni_code",
+    "indicator_id",
+    "year"
+   ],
+   "description_he": "הערכים. שורה לכל רשות, מדד ושנת נתון, כולל ערכים שהלמ\"ס סימנה בסמל מיוחד, עם דגלי איכות ברמת הערך.",
+   "description_en": "The values: one row per authority, indicator and data year, including CBS special symbols, with row-level quality flags.",
+   "rows": 2392849,
+   "files": {
+    "parquet": "data/release/parquet/observations.parquet"
+   },
+   "columns": [
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות",
+     "description_en": "authority code"
+    },
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד",
+     "description_en": "indicator id"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת הנתון (לא שנת הקובץ). ראו indicators.period_kind",
+     "description_en": "data year (not the file year); see indicators.period_kind"
+    },
+    {
+     "name": "value",
+     "type": "float64",
+     "description_he": "הערך המספרי אחרי המרת יחידות. \"אין מקרים\" = 0 במדדי כמות; ריק כשאין מספר",
+     "description_en": "numeric value after unit decisions; nil = 0 for counts; empty when no number"
+    },
+    {
+     "name": "value_text",
+     "type": "str",
+     "description_he": "ערך טקסט (למדדי טקסט), או הטקסט המקורי כשהמספר פגום/טווח",
+     "description_en": "text value, or the original text when the number is malformed or a band"
+    },
+    {
+     "name": "flag",
+     "type": "str",
+     "description_he": "ריק = ערך רגיל · estimate = אומדן (בסוגריים במקור) · nil = \"-\" אין מקרים · not_available = \"..\" לא ידוע/לא לפרסום · footnote = עם הערת שוליים · range = טווח במקום מספר · malformed_number = מספר פגום במקור",
+     "description_en": "empty | estimate | nil | not_available | footnote | range | malformed_number"
+    },
+    {
+     "name": "value_published",
+     "type": "float64",
+     "description_he": "המספר כפי שפורסם, לפני המרת יחידות",
+     "description_en": "number as published, before unit decisions"
+    },
+    {
+     "name": "unit_factor",
+     "type": "float64",
+     "description_he": "המקדם שהוחל (1 = ללא המרה)",
+     "description_en": "multiplier applied (1 = none)"
+    },
+    {
+     "name": "data_period",
+     "type": "str",
+     "description_he": "התקופה כפי שנכתבה בכותרת (למשל תשפ\"ד 2023/24, 2020-2024)",
+     "description_en": "period as written in the header"
+    },
+    {
+     "name": "source_file_year",
+     "type": "int64",
+     "description_he": "שנת הקובץ שממנו נלקח הערך (הקובץ החדש ביותר שיש בו ערך)",
+     "description_en": "file the value comes from (newest file with a value)"
+    },
+    {
+     "name": "is_derived",
+     "type": "bool",
+     "description_he": "ערך נגזר (ל-1,000 תושבים), לא פורסם ישירות",
+     "description_en": "derived value (per 1,000 residents), not published"
+    },
+    {
+     "name": "mapping_confidence",
+     "type": "str",
+     "description_he": "ביטחון בשיוך עמודת המקור לסדרה: high = כותרת זהה, או התאמה שהנתונים מאששים (מתאם ≥0.9 עם השנה הסמוכה) · medium = אין נתונים לאישור / מתאם 0.5–0.9 · low = הנתונים לא ממשיכים (מתאם <0.5)",
+     "description_en": "confidence that the source column belongs to this series: high | medium | low"
+    },
+    {
+     "name": "consistency_issue",
+     "type": "bool",
+     "description_he": "הערך סותר זהות פנימית בנתוני הלמ\"ס",
+     "description_en": "value violates an internal CBS identity"
+    },
+    {
+     "name": "mixed_scale",
+     "type": "bool",
+     "description_he": "הערך נראה כשבר בעמודת אחוזים (בעיה במקור)",
+     "description_en": "value looks like a fraction in a percentage column"
+    },
+    {
+     "name": "revised",
+     "type": "bool",
+     "description_he": "קובץ אחר דיווח ערך שונה לאותה רשות ושנה (ראו observation_revisions)",
+     "description_en": "another file reported a different value (see observation_revisions)"
+    }
+   ]
+  },
+  {
+   "name": "observation_revisions",
+   "grain": "authority × indicator × year × source file",
+   "primary_key": [
+    "muni_code",
+    "indicator_id",
+    "year",
+    "source_file_year"
+   ],
+   "description_he": "ערכים שקבצים קודמים דיווחו לאותה רשות ושנה ושונים מהערך הנבחר.",
+   "description_en": "Values earlier files reported for the same authority and year that differ from the chosen value.",
+   "rows": 3738,
+   "files": {
+    "parquet": "data/release/parquet/observation_revisions.parquet"
+   },
+   "columns": [
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות",
+     "description_en": "authority code"
+    },
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד",
+     "description_en": "indicator id"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת נתון",
+     "description_en": "data year"
+    },
+    {
+     "name": "source_file_year",
+     "type": "int64",
+     "description_he": "הקובץ שדיווח את הגרסה הזו",
+     "description_en": "file reporting this version"
+    },
+    {
+     "name": "value",
+     "type": "float64",
+     "description_he": "הערך בגרסה הזו (אחרי המרת יחידות)",
+     "description_en": "value in this version"
+    },
+    {
+     "name": "chosen_value",
+     "type": "float64",
+     "description_he": "הערך שנבחר ב-observations",
+     "description_en": "value chosen in observations"
+    },
+    {
+     "name": "chosen_file_year",
+     "type": "int64",
+     "description_he": "הקובץ של הערך שנבחר",
+     "description_en": "file of the chosen value"
+    }
+   ]
+  },
+  {
+   "name": "cbs_totals",
+   "grain": "indicator × year × group × source",
+   "primary_key": [
+    "row_id"
+   ],
+   "description_he": "סיכומים רשמיים של הלמ\"ס: ארצי ולפי מעמד. כולל עמודה מקורית כשלא הותאמה למדד.",
+   "description_en": "Official CBS totals: national and by municipal status.",
+   "rows": 14030,
+   "files": {
+    "parquet": "data/release/parquet/cbs_totals.parquet",
+    "csv": "data/release/csv/cbs_totals.csv"
+   },
+   "columns": [
+    {
+     "name": "row_id",
+     "type": "int64",
+     "description_he": "מזהה שורה",
+     "description_en": "row id"
+    },
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד (ריק אם הכותרת בגיליון הסיכום לא הותאמה)",
+     "description_en": "indicator id (empty if the summary label was not matched)"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת נתון",
+     "description_en": "data year"
+    },
+    {
+     "name": "group",
+     "type": "str",
+     "description_he": "national / municipality / local_council / regional_council",
+     "description_en": "national / municipality / local_council / regional_council"
+    },
+    {
+     "name": "value",
+     "type": "float64",
+     "description_he": "הערך אחרי המרת יחידות",
+     "description_en": "value after unit decisions"
+    },
+    {
+     "name": "value_published",
+     "type": "float64",
+     "description_he": "הערך כפי שפורסם",
+     "description_en": "value as published"
+    },
+    {
+     "name": "label",
+     "type": "str",
+     "description_he": "הכותרת בגיליון הסיכום",
+     "description_en": "label in the summary sheet"
+    },
+    {
+     "name": "source",
+     "type": "str",
+     "description_he": "summary_sheet (2011–2021) או in_sheet_row (2022 ואילך)",
+     "description_en": "summary_sheet or in_sheet_row"
+    },
+    {
+     "name": "source_file_year",
+     "type": "int64",
+     "description_he": "שנת הקובץ",
+     "description_en": "file year"
+    }
+   ]
+  },
+  {
+   "name": "benchmarks",
+   "grain": "indicator × year × group",
+   "primary_key": [
+    "indicator_id",
+    "year",
+    "group_type",
+    "group"
+   ],
+   "description_he": "סטטיסטיקות של כל הרשויות לפי קבוצות השוואה. ממוצעים ללא שקלול, אלא אם צוין.",
+   "description_en": "Statistics over authorities per peer group. Unweighted unless stated.",
+   "rows": 513632,
+   "files": {
+    "parquet": "data/release/parquet/benchmarks.parquet"
+   },
+   "columns": [
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד",
+     "description_en": "indicator id"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת נתון",
+     "description_en": "data year"
+    },
+    {
+     "name": "group_type",
+     "type": "str",
+     "description_he": "national · status · ses (אשכול לשנה) · ses_latest (מהדורה אחרונה) · ses_status · eshkol",
+     "description_en": "peer group family"
+    },
+    {
+     "name": "group",
+     "type": "str",
+     "description_he": "ערך הקבוצה (למשל 5, עירייה, \"5 | עירייה\")",
+     "description_en": "group value"
+    },
+    {
+     "name": "n",
+     "type": "int64",
+     "description_he": "מספר רשויות עם ערך",
+     "description_en": "authorities with a value"
+    },
+    {
+     "name": "mean",
+     "type": "float64",
+     "description_he": "ממוצע",
+     "description_en": "mean"
+    },
+    {
+     "name": "median",
+     "type": "float64",
+     "description_he": "חציון",
+     "description_en": "median"
+    },
+    {
+     "name": "std",
+     "type": "float64",
+     "description_he": "סטיית תקן",
+     "description_en": "standard deviation"
+    },
+    {
+     "name": "min",
+     "type": "float64",
+     "description_he": "מינימום",
+     "description_en": "min"
+    },
+    {
+     "name": "max",
+     "type": "float64",
+     "description_he": "מקסימום",
+     "description_en": "max"
+    },
+    {
+     "name": "p25",
+     "type": "float64",
+     "description_he": "רבעון תחתון",
+     "description_en": "25th percentile"
+    },
+    {
+     "name": "p75",
+     "type": "float64",
+     "description_he": "רבעון עליון",
+     "description_en": "75th percentile"
+    },
+    {
+     "name": "pop_weighted_mean",
+     "type": "float64",
+     "description_he": "ממוצע משוקלל באוכלוסייה",
+     "description_en": "population-weighted mean"
+    }
+   ]
+  },
+  {
+   "name": "peer_comparison",
+   "grain": "Eshkol authority × indicator × year",
+   "primary_key": [
+    "muni_code",
+    "indicator_id",
+    "year"
+   ],
+   "description_he": "רשויות האשכול מול קבוצות ההשוואה: פערים, אחוזונים וציון z.",
+   "description_en": "Eshkol authorities against peer groups: gaps, percentiles, z-score.",
+   "rows": 322432,
+   "files": {
+    "parquet": "data/release/parquet/peer_comparison.parquet"
+   },
+   "columns": [
+    {
+     "name": "muni_code",
+     "type": "int64",
+     "description_he": "סמל הרשות",
+     "description_en": "authority code"
+    },
+    {
+     "name": "indicator_id",
+     "type": "str",
+     "description_he": "מזהה מדד",
+     "description_en": "indicator id"
+    },
+    {
+     "name": "year",
+     "type": "int64",
+     "description_he": "שנת נתון",
+     "description_en": "data year"
+    },
+    {
+     "name": "value",
+     "type": "float64",
+     "description_he": "הערך",
+     "description_en": "value"
+    },
+    {
+     "name": "ses_cluster",
+     "type": "Int64",
+     "description_he": "אשכול חברתי-כלכלי לשנה",
+     "description_en": "SES cluster for the year"
+    },
+    {
+     "name": "national_median",
+     "type": "float64",
+     "description_he": "חציון ארצי",
+     "description_en": "national median"
+    },
+    {
+     "name": "national_n",
+     "type": "int64",
+     "description_he": "מספר רשויות בארצי",
+     "description_en": "authorities nationally"
+    },
+    {
+     "name": "cbs_national",
+     "type": "float64",
+     "description_he": "הנתון הארצי הרשמי (2022 ואילך)",
+     "description_en": "official national figure (2022+)"
+    },
+    {
+     "name": "pct_rank_national",
+     "type": "float64",
+     "description_he": "אחוזון ארצי 0–100",
+     "description_en": "national percentile 0-100"
+    },
+    {
+     "name": "gap_national_median",
+     "type": "float64",
+     "description_he": "פער מהחציון הארצי",
+     "description_en": "gap from the national median"
+    },
+    {
+     "name": "ses_median",
+     "type": "float64",
+     "description_he": "חציון האשכול החברתי-כלכלי",
+     "description_en": "median of the SES cluster"
+    },
+    {
+     "name": "ses_n",
+     "type": "float64",
+     "description_he": "מספר רשויות באשכול",
+     "description_en": "authorities in the SES cluster"
+    },
+    {
+     "name": "pct_rank_ses",
+     "type": "float64",
+     "description_he": "אחוזון בתוך האשכול",
+     "description_en": "percentile within the SES cluster"
+    },
+    {
+     "name": "z_ses",
+     "type": "float64",
+     "description_he": "ציון z בתוך האשכול",
+     "description_en": "z-score within the SES cluster"
+    },
+    {
+     "name": "gap_ses_median",
+     "type": "float64",
+     "description_he": "פער מחציון האשכול",
+     "description_en": "gap from the SES-cluster median"
+    },
+    {
+     "name": "ses_latest_median",
+     "type": "float64",
+     "description_he": "חציון האשכול במהדורה האחרונה",
+     "description_en": "median of the latest-edition SES cluster"
+    },
+    {
+     "name": "status_median",
+     "type": "float64",
+     "description_he": "חציון רשויות באותו מעמד",
+     "description_en": "median of authorities with the same status"
+    },
+    {
+     "name": "eshkol_median",
+     "type": "float64",
+     "description_he": "חציון רשויות האשכול הגלילי",
+     "description_en": "median of the Eshkol cluster"
+    }
+   ]
+  }
+ ]
+}

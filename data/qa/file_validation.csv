@@ -16,9 +16,9 @@
 2017.xlsx,2017.0,2017,74636c68eda1,53835,use,,
 2018.xlsx,2018.0,2018,401cf21c3178,57358,use,,
 2019.xlsx,2019.0,2019,a19a03b8d95f,58149,use,,
-2020.xlsx,2020.0,2020,9c81864aac4e,57602,use,,
-p_libud_2019.xlsx,,2022,48f9366f2018,63276,excluded,"Despite its name this is the 2022 file (title ""רשויות מקומיות 2022""); after dropping two added columns (""אשכול גליל מזרחי"") every cell equals p_libud_22.xlsx. The real 2019 file is 2019.xlsx.","p_libud_2019.xlsx, p_libud_22.xlsx"
-p_libud_2021.xlsx,2021.0,2021,93eb1b50b0f8,60027,use,,
-p_libud_22.xlsx,2022.0,2022,48f9366f2018,63276,use,,"p_libud_2019.xlsx, p_libud_22.xlsx"
+2020.xlsx,2020.0,2020,4e23c8ea4b91,57603,use,,
+p_libud_2019.xlsx,,2022,75faf46d80e7,63435,excluded,"Despite its name this is the 2022 file (title ""רשויות מקומיות 2022""); after dropping two added columns (""אשכול גליל מזרחי"") every cell equals p_libud_22.xlsx. The real 2019 file is 2019.xlsx.","p_libud_2019.xlsx, p_libud_22.xlsx"
+p_libud_2021.xlsx,2021.0,2021,dbcf5cae7007,60028,use,,
+p_libud_22.xlsx,2022.0,2022,75faf46d80e7,63435,use,,"p_libud_2019.xlsx, p_libud_22.xlsx"
 p_libud_23.xlsx,2023.0,2023,64c0ab792b7c,61588,use,,
 p_libud_24.xlsx,2024.0,2024,668e7f62552a,67746,use,,

@@ -18,7 +18,10 @@ intermediate `data/bronze|silver|gold` layers.
 
 ## Discover before you answer
 
-1. **Find indicators** in `indicators` by `name` (Hebrew, levels joined by ` › `) or `topic`.
+1. **Find indicators** in `indicators` by `name` or `topic`. A name starts with the CBS section heading
+   and joins levels with ` › ` (`דמוגרפיה › סה"כ אוכלוסייה בסוף השנה`), so search with
+   `name LIKE '%stem%'`, never a prefix. Spelling is normalized: full spelling (אוכלוסייה, עירייה) and `סה"כ`.
+   Population, SES and periphery per authority and year are ready in `authority_year`.
    Several indicators can match a concept: compare `first_year`/`last_year`, `n_authorities_last_year`,
    `applies_to` and `quality_flags`, and read `same_values_as`, `continues`, `continued_by`.
 2. **Check availability** in `coverage` (per indicator and year) before saying data is missing
