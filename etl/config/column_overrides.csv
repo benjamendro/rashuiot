@@ -1,0 +1,4 @@
+# Manual mapping decisions (applied before automatic matching, newest year first).
+# indicator_id: an id from silver/indicator_catalog_DRAFT.csv, or NEW to keep the column separate.
+# Example:  2015,נתונים כספיים - עיריות ומ.מקומי,40,B1a2b3c,"same as הכנסות מהממשלה: ממשרד הרווחה"
+year,sheet,col,indicator_id,note
