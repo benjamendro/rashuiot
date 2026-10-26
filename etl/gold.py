@@ -78,6 +78,9 @@ def build_facts(cells, colmap, unit_decisions):
     keys = list(zip(f['indicator_id'], f['file_year']))
     f['unit_factor'] = [fac.get(k, 1.0) for k in keys]
     f['value'] = f['value_raw'] * f['unit_factor']
+    # 16.1 * 1000 = 16100.000000000002 in binary floating point: round converted values only
+    conv = f['unit_factor'].ne(1.0)
+    f.loc[conv, 'value'] = f.loc[conv, 'value'].round(9)
     f['low_reliability'] = f['flag'].eq('low_reliability')
     f['nil_as_zero'] = False
     f = f.rename(columns={'review_needed': 'mapping_review'})

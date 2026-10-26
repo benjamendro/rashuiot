@@ -274,5 +274,7 @@ def test_release_key_series_are_continuous():
     pop = obs[(obs.indicator_id == 'Pfb4027') & (obs.muni_code == 8000)].set_index('year')['value']
     assert ind.at['Pfb4027', 'first_year'] == 2003 and ind.at['Pfb4027', 'last_year'] == 2024
     assert 0.95 < pop[2018] / pop[2017] < 1.05                       # thousands -> persons converted
+    conv = obs[(obs.indicator_id == 'Pfb4027') & (obs.unit_factor == 1000)].value.dropna()
+    assert (conv == conv.round()).all()                               # no 16100.000000000002
     ses = obs[obs.indicator_id == 'Pb5ba90'].value.dropna()
     assert ses.between(1, 10).all()
